@@ -1,3 +1,4 @@
+from __future__ import annotations
 from bitwise import Bitwise, BitwiseType
 
 # A structure representing a conjunction of possibly negated variables. It is
@@ -8,7 +9,7 @@ class Implicant():
     # Initialize an implicant for the given number of variables and the given
     # value whose binary representation constitutes the implicant's truth
     # values.
-    def __init__(self, vnumber, value):
+    def __init__(self, vnumber : int, value : int) -> None:
         self.vec = []
         self.minterms = [value] if value != -1 else []
         self.obsolete = False
@@ -18,7 +19,7 @@ class Implicant():
 
     # Initialize the implicant's vector with 1s for variables that appear
     # unnegatedly and 0s for those which appear negatedly.
-    def __init_vec(self, vnumber, value):
+    def __init_vec(self, vnumber : int, value : int) -> None:
         for i in range(vnumber):
             self.vec.append(value & 1)
             value >>= 1
@@ -26,23 +27,23 @@ class Implicant():
         assert(len(self.vec) == vnumber)
 
     # Returns a string representation of this implicant.
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.vec)
 
     # Returns a copy of this implicant.
-    def __get_copy(self):
+    def __get_copy(self) -> Implicant:
         cpy = Implicant(len(self.vec), -1)
         cpy.vec = list(self.vec)
         cpy.minterms = list(self.minterms)
         return cpy
 
     # Returns the number of ones in the implicant's vector.
-    def count_ones(self):
+    def count_ones(self) -> int:
         return self.vec.count(1)
 
     # Try to merge this implicant with the given one. Returns a merged
     # implicant if this is possible and None otherwise.
-    def try_merge(self, other):
+    def try_merge(self, other : Implicant) -> Implicant:
         assert(len(self.vec) == len(other.vec))
         
         diffIdx = -1        
@@ -64,7 +65,7 @@ class Implicant():
         return newImpl
 
     # Create an abstract syntax tree structure corresponding to this implicant.
-    def to_bitwise(self):
+    def to_bitwise(self) -> Bitwise:
         root = Bitwise(BitwiseType.CONJUNCTION)
         for i in range(len(self.vec)):
             # The variable has no influence.
@@ -79,7 +80,7 @@ class Implicant():
         return root
 
     # Returns a more detailed string representation.
-    def get(self, variables):
+    def get(self, variables : list[str]) -> str:
         assert(len(variables) == len(self.vec))
         
         s = ""
