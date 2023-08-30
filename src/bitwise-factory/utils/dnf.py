@@ -18,7 +18,7 @@ def popcount(x):
 class Dnf():
     # Initialize a disjunctive normal form with given number of variables and
     # the given truth value vector.
-    def __init__(self, vnumber, vec):
+    def __init__(self, vnumber : int, vec : list[int]) -> None:
         self.__groups = []
         self.primes = []
 
@@ -30,7 +30,7 @@ class Dnf():
     # vector, equivalent to the corresponding evaluation of variables according
     # to its position, and classify the conjunctions according to their numbers
     # of ones.
-    def __init_groups(self, vnumber, vec):
+    def __init_groups(self, vnumber : int, vec : list[int]) -> None:
         assert(len(vec) == 2**vnumber)
 
         self.__groups = [[] for i in range(vnumber + 1)]
@@ -47,7 +47,7 @@ class Dnf():
     # whose vectors differ in just one position. Note that, e.g., the
     # disjunction of "x&y&z" and "x&y&~z" can be simplified to "x&y" since the
     # "z" has no influence on its values."
-    def __merge_step(self):
+    def __merge_step(self) -> bool:
         changed = False
         newGroups = [[] for g in self.__groups]
 
@@ -77,7 +77,7 @@ class Dnf():
         return changed
 
     # Try to merge implicants iteratively until nothing can be merged any more.
-    def __merge(self):
+    def __merge(self) -> None:
         while True:
             changed = self.__merge_step()
 
@@ -85,7 +85,7 @@ class Dnf():
                 return
 
     # Remove impliciants which are already represented by others.
-    def __drop_unrequired_implicants(self, vec):
+    def __drop_unrequired_implicants(self, vec : list[int]) -> None:
         requ = set([i for i in range(len(vec)) if vec[i] == 1])
         
         i = 0
@@ -102,7 +102,7 @@ class Dnf():
             del self.primes[i]
 
     # Returns a string representation of this DNF.
-    def __str__(self):
+    def __str__(self) -> str:
         s = "implicants:\n"
 
         for impl in self.primes:
@@ -111,7 +111,7 @@ class Dnf():
         return s
 
     # Create an abstract syntax tree structure corresponding to this DNF.
-    def to_bitwise(self):
+    def to_bitwise(self) -> Bitwise:
         cnt = len(self.primes)
         if cnt == 0: return Bitwise(BitwiseType.TRUE, True)
         if cnt == 1: return self.primes[0].to_bitwise()
@@ -123,7 +123,7 @@ class Dnf():
         return root
 
     # Returns a more detailed string representation.
-    def get(self, variables):
+    def get(self, variables : list[str]) -> str:
         if len(self.primes) == 0: return "0"
 
         s = ""
