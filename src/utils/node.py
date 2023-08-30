@@ -114,7 +114,7 @@ class Node():
     # withParentheses is True. For commutative binary operators, print children
     # until the end-th one. If varNames is not None, its entries are used as
     # variable names.
-    def to_string(self, withParentheses : bool = False, end : int =-1, varNames : list[str] =None) -> str:
+    def to_string(self, withParentheses : bool = False, end : int = -1, varNames : list[str] = None) -> str:
         if end == -1: end = len(self.children)
         else: assert(end <= len(self.children))
 
@@ -901,7 +901,7 @@ class Node():
     # Try to merge the given nodes, both terms of the same sum and children of
     # this node. They are merged if they coincide up to a constant factor.
     # Returns true iff they are merged.
-    def __try_merge_sum_children(self, i, j) -> bool:
+    def __try_merge_sum_children(self, i : int, j : int) -> bool:
         child1 = self.children[i]
         const1 = child1.__get_opt_const_factor()
 
@@ -928,7 +928,7 @@ class Node():
 
     # Returns true iff this node is equivalent to the given one, neglecting the
     # nodes constants if they have any and are products.
-    def __equals_neglecting_constants(self, other, hasConst, hasConstOther) -> bool:
+    def __equals_neglecting_constants(self, other : Node, hasConst : bool, hasConstOther : bool) -> bool:
         assert(not hasConst or self.type == NodeType.PRODUCT)
         assert(not hasConstOther or other.type == NodeType.PRODUCT)
         assert(not hasConst or self.children[0].type == NodeType.CONSTANT)
@@ -946,7 +946,7 @@ class Node():
     # Returns true iff this node is equivalent to the given one, neglecting the
     # nodes constants if they have any and are products. Requires that the
     # other node has a constant factor and this node doesn't.
-    def __equals_neglecting_constants_other_const(self, other) -> bool:
+    def __equals_neglecting_constants_other_const(self, other : Node) -> bool:
         assert(other.type == NodeType.PRODUCT)
         assert(other.children[0].type == NodeType.CONSTANT)
         assert(self.type != NodeType.PRODUCT or self.children[0].type != NodeType.CONSTANT)
@@ -971,7 +971,7 @@ class Node():
     # Returns true iff this node is equivalent to the given one, neglecting the
     # nodes constants if they have any and are products. Requires that this
     # node as well as the other one have a constant factor.
-    def __equals_neglecting_constants_both_const(self, other) -> bool:
+    def __equals_neglecting_constants_both_const(self, other : Node) -> bool:
         assert(self.type == NodeType.PRODUCT)
         assert(self.children[0].type == NodeType.CONSTANT)
         assert(other.type == NodeType.PRODUCT)
@@ -1048,7 +1048,7 @@ class Node():
             i += 1
 
     # Returns True iff this node is bitwise inverse to the given node.
-    def __is_bitwise_inverse(self, other) -> bool:
+    def __is_bitwise_inverse(self, other : Node) -> bool:
         if self.type == NodeType.NEGATION:
             if other.type == NodeType.NEGATION:
                 return self.children[0].__is_bitwise_inverse(other.children[0])
@@ -1114,7 +1114,7 @@ class Node():
     # Perform step 2 of the refinement for the expression whose top-level node
     # is this one. That is, check whether bitwise negations should be
     # transformed.
-    def __refine_step_2(self, parent=None, restrictedScope=False) -> None:
+    def __refine_step_2(self, parent : Node = None, restrictedScope : bool = False) -> None:
         changed = False
         if not restrictedScope:
             for c in self.children:
@@ -1205,7 +1205,7 @@ class Node():
         return False
 
     # Multiply this node by the given factor.
-    def __multiply(self, factor) -> None:
+    def __multiply(self, factor : int) -> None:
         if (factor - 1) % self.__modulus == 0: return
 
         if self.type == NodeType.CONSTANT:
@@ -1336,7 +1336,7 @@ class Node():
     # very similar formula ~x = -(x + 1). The other way round, if this node is
     # a negation written arithmetically and its parent is a bitwise operation,
     # transform it into a bitwise negation.
-    def __check_bitwise_negations(self, parent) -> bool:
+    def __check_bitwise_negations(self, parent : Node) -> bool:
         if self.type == NodeType.NEGATION:
             # If the parent is bitwise, we keep the bitwise negation.
             if parent != None and parent.__is_bitwise_op(): return False
@@ -1410,7 +1410,7 @@ class Node():
 
     # Assuming that this node is a bitwise negation, consider replacing this
     # node using the formula ~x = -x - 1.
-    def __substitute_bitwise_negation_generic(self, parent) -> bool:
+    def __substitute_bitwise_negation_generic(self, parent : Node) -> bool:
         assert(self.type == NodeType.NEGATION)
 
         if parent == None: return False
@@ -1474,7 +1474,7 @@ class Node():
     # of each of this node's children. Requires that this node is a binary
     # bitwise operation. Additionally returns a constant that has to be added
     # due to a modification.
-    def __get_max_factor_power_of_two_in_children(self, allowRem=True) -> int:
+    def __get_max_factor_power_of_two_in_children(self, allowRem : bool = True) -> int:
         assert(len(self.children) > 1)
         assert(self.__is_bitwise_binop() or self.type == NodeType.SUM)
 
@@ -1511,7 +1511,7 @@ class Node():
     # is clearly divisible by this factor, since thereby we subtract a 1 from
     # an odd number which is conjuncted with an even number. Additionally
     # returns True iff a 1 is subtracted in this course.
-    def __get_max_factor_power_of_two(self, allowRem) -> int:
+    def __get_max_factor_power_of_two(self, allowRem : bool) -> int:
         # NOTE: trailing_zeros() returns -1 for input 0. We use that to
         # indicate that we can factor out any arbitrary number in that case.
         if self.type == NodeType.CONSTANT: return trailing_zeros(self.constant)
@@ -1529,7 +1529,7 @@ class Node():
         return 0
 
     # Divide this node by a power of two with given exponent.
-    def __divide_by_power_of_two(self, e) -> int:
+    def __divide_by_power_of_two(self, e : int) -> int:
         if self.type == NodeType.CONSTANT:
             orig = self.constant
             self.constant >>= e
@@ -1584,7 +1584,7 @@ class Node():
 
     # Knowing that the largest e bits have no influence for this node, figure
     # out whether to either set or unset all these irrelevant bits.
-    def __check_beautify_constants(self, e) -> bool:
+    def __check_beautify_constants(self, e : int) -> bool:
         # TODO: Cover powers too.
         if self.__is_bitwise_op() or self.type in [NodeType.SUM, NodeType.PRODUCT]:
             changed = False
@@ -1689,7 +1689,7 @@ class Node():
 
     # Returns a recursively negated child with minimal negation depth, together
     # with the depth or None if there is none.
-    def __get_recursively_negated_child(self, maxDepth=None) -> tuple[Node, Node]:
+    def __get_recursively_negated_child(self, maxDepth : Optional[int] = None) -> tuple[Node, Node]:
         if self.type == NodeType.NEGATION: return self, 0
 
         node = self.__get_opt_transformed_negated()
@@ -1749,7 +1749,7 @@ class Node():
 
     # If this node is a power, check whether we can extract a constant factor
     # out of it.
-    def __check_rewrite_powers(self, parent) -> bool:
+    def __check_rewrite_powers(self, parent : Node) -> bool:
         if self.type != NodeType.POWER: return False
 
         exp = self.children[1]
@@ -1835,7 +1835,7 @@ class Node():
         return changed
 
     # Adds the given node to this node.
-    def __add(self, other) -> None:
+    def __add(self, other : Node) -> None:
         if self.type == NodeType.CONSTANT:
             constant = self.constant
             self.copy(other.get_copy())
@@ -1861,7 +1861,7 @@ class Node():
         self.__merge_similar_nodes_sum()
 
     # Add the given constant to this node.
-    def __add_constant(self, constant) -> None:
+    def __add_constant(self, constant : int) -> None:
         if self.type == NodeType.CONSTANT:
             self.__set_and_reduce_constant(self.constant + constant)
             return
@@ -1881,7 +1881,7 @@ class Node():
 
     # Add the given node to this node, which is assumed to be a sum. The given
     # node is required not to be a constant.
-    def __add_to_sum(self, other) -> None:
+    def __add_to_sum(self, other : Node) -> None:
         assert(self.type == NodeType.SUM)
         assert(other.type != NodeType.CONSTANT)
 
@@ -2016,7 +2016,7 @@ class Node():
 
     # Returns true iff the given node can be factored out from all children but
     # the first one.
-    def __has_factor_in_remaining_children(self, factor) -> bool:
+    def __has_factor_in_remaining_children(self, factor : Node) -> bool:
         assert(self.type == NodeType.SUM)
 
         for child in self.children[1:]:
@@ -2025,7 +2025,7 @@ class Node():
         return True
 
     # Returns true iff the given node can be factored out from this node.
-    def __has_factor(self, factor) -> bool:
+    def __has_factor(self, factor : Node) -> bool:
         if self.type == NodeType.PRODUCT: return self.__has_factor_product(factor)
 
         if self.type == NodeType.POWER:
@@ -2041,7 +2041,7 @@ class Node():
 
     # Returns true iff the given node can be factored out from this node, which
     # is required to be a product.
-    def __has_factor_product(self, factor) -> bool:
+    def __has_factor_product(self, factor : Node) -> bool:
         assert(self.type == NodeType.PRODUCT)
 
         for child in self.children:
@@ -2056,25 +2056,25 @@ class Node():
         return False
 
     # Returns true iff this node has a child equal to the given node.
-    def __has_child(self, node) -> bool:
+    def __has_child(self, node : Node) -> bool:
         return self.__get_index_of_child(node) != None
 
     # If this node has a child equal to the given node, returns its index.
     # Otherwise returns None.
-    def __get_index_of_child(self, node) -> Optional[int]:
+    def __get_index_of_child(self, node : Node) -> Optional[int]:
         for i in range(len(self.children)):
             if self.children[i].equals(node): return i
         return None
 
     # If this node has a child equal to the negation of the given node, returns
     # its index. Otherwise returns None.
-    def __get_index_of_child_negated(self, node) -> Optional[int]:
+    def __get_index_of_child_negated(self, node : Node) -> Optional[int]:
         for i in range(len(self.children)):
             if self.children[i].equals_negated(node): return i
         return None
 
     # Factor out the given node from this node.
-    def __eliminate_factor(self, factor) -> None:
+    def __eliminate_factor(self, factor : Node) -> None:
         if self.type == NodeType.PRODUCT:
             self.__eliminate_factor_product(factor)
             return
@@ -2088,7 +2088,7 @@ class Node():
         self.copy(c)
 
     # Factor out the given node from this product node.
-    def __eliminate_factor_product(self, factor) -> None:
+    def __eliminate_factor_product(self, factor : Node) -> None:
         assert(self.type == NodeType.PRODUCT)
 
         for i in range(len(self.children)):
@@ -2106,7 +2106,7 @@ class Node():
         assert(False) # pragma: no cover
 
     # Factor out the given node from this power node.
-    def __eliminate_factor_power(self, factor) -> None:
+    def __eliminate_factor_power(self, factor : Node) -> None:
         assert(self.type == NodeType.POWER)
 
         if self.equals(factor):
@@ -2196,7 +2196,7 @@ class Node():
     # the corresponding numbers of times, resp. If restrictedScope is True,
     # stop at nodes that are no sums, products or powers, i.e., we want one
     # single resulting sum.
-    def expand(self, restrictedScope=False) -> bool:
+    def expand(self, restrictedScope : bool = False) -> bool:
         if restrictedScope and self.type not in [NodeType.SUM, NodeType.PRODUCT, NodeType.POWER]:
             return False
 
@@ -2288,7 +2288,7 @@ class Node():
         else: self.copy(node)
 
     # Multiply this node, which is assumed to be a sum, with the given node.
-    def __multiply_sum(self, other) -> None:
+    def __multiply_sum(self, other : Node) -> None:
         assert(self.type == NodeType.SUM)
 
         if other.type == NodeType.SUM:
@@ -2319,7 +2319,7 @@ class Node():
 
     # Multiply this node, which is assumed to be a sum, with the given sum
     # node.
-    def __multiply_sum_with_sum(self, other, keepSum=False) -> None:
+    def __multiply_sum_with_sum(self, other : Node , keepSum : bool = False) -> None:
         assert(self.type == NodeType.SUM)
         assert(other.type == NodeType.SUM)
 
@@ -2351,7 +2351,7 @@ class Node():
         elif len(self.children) == 0: self.copy(self.__new_constant_node(0))
 
     # Multiply this node by the given factor.
-    def __get_product_with_node(self, other) -> Node:
+    def __get_product_with_node(self, other : Node) -> Node:
         if self.type == NodeType.CONSTANT:
             return self.__get_product_of_constant_and_node(other)
 
@@ -2373,7 +2373,7 @@ class Node():
         return self.__get_product_generic(other)
 
     # Returns the product of this constant node and the given node.
-    def __get_product_of_constant_and_node(self, other) -> Node:
+    def __get_product_of_constant_and_node(self, other : Node) -> Node:
         assert(self.type == NodeType.CONSTANT)
 
         node = other.get_copy()
@@ -2382,7 +2382,7 @@ class Node():
 
     # Returns the product of this and the given node which are both assumed to
     # be products.
-    def __get_product_of_products(self, other) -> Node:
+    def __get_product_of_products(self, other : Node) -> Node:
         assert(self.type == NodeType.PRODUCT)
         assert(other.type == NodeType.PRODUCT)
 
@@ -2431,7 +2431,7 @@ class Node():
 
     # Merge the given power node into this node, which is assumed to be a
     # product.
-    def __merge_power_into_product(self, other) -> None:
+    def __merge_power_into_product(self, other : Node) -> None:
         assert(self.type == NodeType.PRODUCT)
         assert(other.type == NodeType.POWER)
 
@@ -2463,7 +2463,7 @@ class Node():
 
     # Returns the product of this and the given node which are both assumed to
     # be powers.
-    def __get_product_of_powers(self, other) -> Node:
+    def __get_product_of_powers(self, other : Node) -> Node:
         assert(self.type == NodeType.POWER)
         assert(other.type == NodeType.POWER)
 
@@ -2484,7 +2484,7 @@ class Node():
 
     # Returns the product of this node, which is assumed to be a product, and
     # the given node, which is assumed to be a power.
-    def __get_product_of_product_and_power(self, other) -> Node:
+    def __get_product_of_product_and_power(self, other : Node) -> Node:
         assert(self.type == NodeType.PRODUCT)
         assert(other.type == NodeType.POWER)
 
@@ -2501,7 +2501,7 @@ class Node():
     # Returns the product of this node, which is assumed to be a product, and
     # the given node, which is assumed to neither a constant nor a product nor
     # a power.
-    def __get_product_of_product_and_other(self, other) -> Node:
+    def __get_product_of_product_and_other(self, other : Node) -> Node:
         assert(self.type == NodeType.PRODUCT)
         assert(other.type not in [NodeType.CONSTANT, NodeType.PRODUCT, NodeType.POWER])
 
@@ -2535,7 +2535,7 @@ class Node():
     # Returns the product of this node, which is assumed to be a power, and
     # the given node, which is assumed to neither a constant nor a product nor
     # a power.
-    def __get_product_of_power_and_other(self, other) -> Node:
+    def __get_product_of_power_and_other(self, other : Node) -> Node:
         assert(self.type == NodeType.POWER)
         assert(other.type not in [NodeType.CONSTANT, NodeType.PRODUCT, NodeType.POWER])
 
@@ -2555,7 +2555,7 @@ class Node():
 
     # Returns the product of this and the given node which are both neither
     # constants nor products nor powers.
-    def __get_product_generic(self, other) -> Node:
+    def __get_product_generic(self, other : Node) -> Node:
         assert(self.type not in [NodeType.CONSTANT, NodeType.PRODUCT, NodeType.POWER])
         assert(other.type not in [NodeType.CONSTANT, NodeType.PRODUCT, NodeType.POWER])
 
@@ -2564,7 +2564,7 @@ class Node():
         return self.__new_node_with_children(NodeType.PRODUCT, [self.get_copy(), other.get_copy()])
 
     # Multiply this node by the given factor, which is assumed to be no sum.
-    def __multiply_with_node_no_sum(self, other) -> Node:
+    def __multiply_with_node_no_sum(self, other : Node) -> Node:
         assert(other.type != NodeType.SUM)
 
         if self.type == NodeType.CONSTANT:
@@ -2592,7 +2592,7 @@ class Node():
         else: self.__multiply_generic(other)
 
     # Multiply of this and the given node which are both assumed to be products.
-    def __multiply_product_with_product(self, other) -> None:
+    def __multiply_product_with_product(self, other : Node) -> None:
         assert(self.type == NodeType.PRODUCT)
         assert(other.type == NodeType.PRODUCT)
 
@@ -2637,7 +2637,7 @@ class Node():
         elif len(self.children) == 0: self.copy(self.__new_constant_node(1))
 
     # Multiply this and the given node which are both assumed to be powers.
-    def __multiply_power_with_power(self, other) -> None:
+    def __multiply_power_with_power(self, other : Node) -> None:
         assert(self.type == NodeType.POWER)
         assert(other.type == NodeType.POWER)
 
@@ -2656,7 +2656,7 @@ class Node():
 
     # Multiply this node, which is assumed to be a product, and the given node,
     # which is assumed to be a power.
-    def __multiply_product_with_power(self, other) ->Node:
+    def __multiply_product_with_power(self, other : Node) ->Node:
         assert(self.type == NodeType.PRODUCT)
         assert(other.type == NodeType.POWER)
 
@@ -2670,7 +2670,7 @@ class Node():
 
     # Multiply this node, which is assumed to be a product, and the given node,
     # which is assumed to neither a constant nor a product nor a power.
-    def __multiply_product_with_other(self, other) -> None:
+    def __multiply_product_with_other(self, other : Node) -> None:
         assert(self.type == NodeType.PRODUCT)
         assert(other.type not in [NodeType.CONSTANT, NodeType.PRODUCT, NodeType.POWER])
 
@@ -2700,7 +2700,7 @@ class Node():
 
     # Multiply this node, which is assumed to be a power, and the given node,
     # which is assumed to neither a constant nor a product nor a power.
-    def __multiply_power_with_other(self, other) -> None:
+    def __multiply_power_with_other(self, other : Node) -> None:
         assert(self.type == NodeType.POWER)
         assert(other.type not in [NodeType.CONSTANT, NodeType.PRODUCT, NodeType.POWER])
 
@@ -2719,7 +2719,7 @@ class Node():
 
     # Multiply this with the given node which are both neither constants nor
     # products nor powers.
-    def __multiply_generic(self, other) -> None:
+    def __multiply_generic(self, other : Node) -> None:
         assert(self.type not in [NodeType.CONSTANT, NodeType.PRODUCT, NodeType.POWER])
         assert(other.type not in [NodeType.CONSTANT, NodeType.PRODUCT, NodeType.POWER])
 
@@ -2767,7 +2767,7 @@ class Node():
     # For all sum nodes, check whether we can factor out common nodes. Returns
     # true iff anything has changed. If restrictedScope is True, only this node
     # is considered.
-    def factorize_sums(self, restrictedScope=False) -> bool:
+    def factorize_sums(self, restrictedScope : bool = False) -> bool:
         if restrictedScope: return self.__check_factorize_sum()
 
         changed = False
@@ -2893,7 +2893,7 @@ class Node():
         return not self.__is_bitwise_binop()
 
     # Create a node from the given batch.
-    def __node_from_batch(self, batch, nodes, termsToNodes) -> Node:
+    def __node_from_batch(self, batch : Batch, nodes : list[Node], termsToNodes : list[IndexWithMultitude]) -> Node:
         node = self.__new_node(NodeType.SUM)
 
         for c in batch.children: node.children.append(self.__node_from_batch(c, nodes, termsToNodes))
@@ -2970,7 +2970,7 @@ class Node():
 
     # Returns a node which coincides width the given list's element with given
     # index and multitude.
-    def __create_node_for_factor(self, nodes, indexWithMultitude) -> Node:
+    def __create_node_for_factor(self, nodes : list[Node], indexWithMultitude : IndexWithMultitude) -> Node:
         exp = indexWithMultitude.multitude
         assert(exp > 0)
         idx = indexWithMultitude.idx
@@ -2999,7 +2999,7 @@ class Node():
         return changed
 
     # If the given node appears as a child or child's child, replace it by -1.
-    def __check_insert_fixed_true(self, node) -> bool:
+    def __check_insert_fixed_true(self, node : Node) -> bool:
         if not self.__is_bitwise_op(): return False
 
         changed = False
@@ -3032,7 +3032,7 @@ class Node():
         return changed
 
     # If the given node appears as a child or child's child, replace it by 0.
-    def __check_insert_fixed_false(self, node) -> bool:
+    def __check_insert_fixed_false(self, node : Node) -> bool:
         if not self.__is_bitwise_op(): return False
 
         changed = False
@@ -3502,7 +3502,7 @@ class Node():
     # is INCL_DISJUNCTION) or x&-((x|y)&-x) (if it is CONJUNCTION), where y can
     # vanish. Whenever found, remove -((x&y)|-x) or -((x|y)&-x), resp., since
     # it has no effect.
-    def __check_nested_bitwise_identity_rule(self, t) -> bool:
+    def __check_nested_bitwise_identity_rule(self, t : NodeType) -> bool:
         if self.type != t: return False
 
         changed = False
@@ -3546,7 +3546,7 @@ class Node():
     # If this node has the pattern -((x&y)|-x) if (t is INCL_DISJUNCTION) or
     # -((x|y)&-x) (if it is CONJUNCTION), returns [x, -x] (if y is not present)
     # or [x] (otherwise). Returns [] otherwise.
-    def __get_candidates_nested_bitwise_identity(self, t) -> None:
+    def __get_candidates_nested_bitwise_identity(self, t : NodeType) -> None:
         # Check for factor -1.
         if self.type != NodeType.PRODUCT: return []
         if len(self.children) != 2: return []
@@ -4162,7 +4162,7 @@ class Node():
 
     # If this node has the pattern x&-(-y&(x|y)) or x|-(-y|(x&y)), returns x,
     # y. Returns None, None otherwise.
-    def __get_opt_arg_nested_bitwise(self, t) -> tuple[Node, Node]:
+    def __get_opt_arg_nested_bitwise(self, t : NodeType) -> tuple[Node, Node]:
         if self.type != NodeType.PRODUCT: return None, None
         if len(self.children) != 2: return None, None
         if not self.children[0].__is_constant(-1): return None, None
@@ -4348,7 +4348,7 @@ class Node():
     # inclusive disjunction (if it is a conjunction) or a conjunction (resp.)
     # or an exclusive disjunction. If a transformation has happened, returns
     # the new index of the bitwise. Otherwise returns None.
-    def __check_transform_bitwise_in_sum_cancel(self, idx, bitw, factor) -> Optional[int]:
+    def __check_transform_bitwise_in_sum_cancel(self, idx : int, bitw : Node, factor : int) -> Optional[int]:
         # For a transformation to Xor, we need a factor divisible by 2.
         withToXor = factor % 2 == 0
 
@@ -4373,7 +4373,7 @@ class Node():
     # If it is True, apply, e.g., the following rules:
     #   "2*(x&y) - x - y" -> "-(x^y)"
     #   "2*(x|y) - x - y" -> "x^y"
-    def __check_transform_bitwise_in_sum_cancel_impl(self, toXor, idx, bitw, factor) -> Optional[int]:
+    def __check_transform_bitwise_in_sum_cancel_impl(self, toXor : bool, idx : int, bitw : Node, factor : int) -> Optional[int]:
         assert(self.type == NodeType.SUM)
         assert(idx < len(self.children))
 
@@ -4404,7 +4404,7 @@ class Node():
     # exclusive disjunction (if toXor is true) or its inverse operation
     # (otherwise) if this would cancel out the sum terms corresponding to the
     # given combination index.
-    def __check_transform_bitwise_for_comb(self, toXor, idx, bitw, factor, opSum, combIdx) -> bool:
+    def __check_transform_bitwise_for_comb(self, toXor : bool , idx : int, bitw : Node, factor : int, opSum : Node, combIdx : int) -> bool:
         n = combIdx
 
         diff = opSum.get_copy()
@@ -4452,7 +4452,7 @@ class Node():
     # between the sum of candidate terms and the sum of the bitwise
     # expression's operands is given, together with a list of the terms'
     # indices.
-    def __check_transform_bitwise_for_diff(self, toXor, idx, bitw, factor, diff, indices) -> Optional[int]:
+    def __check_transform_bitwise_for_diff(self, toXor : bool, idx : int, bitw : Node, factor : int, diff : Node, indices : list[int]) -> Optional[int]:
         newIdx = self.__check_transform_bitwise_for_diff_full(toXor, idx, bitw, factor, diff, indices)
         if newIdx != None: return newIdx
 
@@ -4473,7 +4473,7 @@ class Node():
     # exclusive disjunction (if toXor is true) or its inverse operation
     # (otherwise) if this would cancel out sum terms. Transform the expression
     # if the given difference is a constant.
-    def __check_transform_bitwise_for_diff_full(self, toXor, idx, bitw, factor, diff, indices) -> Optional[int]:
+    def __check_transform_bitwise_for_diff_full(self, toXor : bool, idx : int, bitw : Node, factor : int, diff : Node, indices : list[int]) -> Optional[int]:
         if diff.type != NodeType.CONSTANT: return None
 
         # We found a match. Transform the bitwise expression.
@@ -4508,7 +4508,7 @@ class Node():
     # exclusive disjunction (if toXor is true) or its inverse operation
     # (otherwise) if this would cancel out sum terms. Transform the expression
     # if the given difference can be merged into one of the terms.
-    def __check_transform_bitwise_for_diff_merge(self, toXor, idx, bitw, factor, diff, indices) -> Optional[int]:
+    def __check_transform_bitwise_for_diff_merge(self, toXor : bool, idx : int, bitw : Node, factor : int, diff : Node, indices : list[int]) -> Optional[int]:
         constN = diff.__get_opt_const_factor()
         for i in indices:
             child = self.children[i]
@@ -4547,7 +4547,7 @@ class Node():
 
     # Returns the type this node would have after transformation. If toXor is
     # True, EXCL_DISJUNCTION is returned.
-    def __get_transformed_bitwise_type(self, toXor) -> NodeType:
+    def __get_transformed_bitwise_type(self, toXor : bool) -> NodeType:
         assert(self.type in [NodeType.CONJUNCTION, NodeType.INCL_DISJUNCTION])
 
         if toXor: return NodeType.EXCL_DISJUNCTION
@@ -4608,7 +4608,7 @@ class Node():
     # or an exclusive disjunction such that a more complex term is replaced by
     # a less complex one. If a transformation has happened, returns the new
     # index of the bitwise. Otherwise returns None.
-    def __check_transform_bitwise_in_sum_replace(self, idx, bitw, factor) -> Optional[int]:
+    def __check_transform_bitwise_in_sum_replace(self, idx : int, bitw : Node, factor : int) -> Optional[int]:
         # Only continue if one operand is more complex than the other one.
         # Here we measure complexity via linearity.
         cIdx = bitw.__get_index_of_more_complex_operand()
@@ -4666,7 +4666,7 @@ class Node():
     # If it is True, apply, e.g., the following rules:
     #   "2*(x&y) - x" -> "y - (x^y)"
     #   "2*(x|y) - x" -> "y + (x^y)"
-    def __check_transform_bitwise_in_sum_replace_impl(self, toXor, idx, bitw, cIdx, factor) -> Optional[int]:
+    def __check_transform_bitwise_in_sum_replace_impl(self, toXor : bool, idx : int, bitw : Node, cIdx : int, factor : int) -> Optional[int]:
         assert(self.type == NodeType.SUM)
         assert(idx < len(self.children))
 
@@ -4694,7 +4694,7 @@ class Node():
     # exclusive disjunction (if toXor is true) or its inverse operation
     # (otherwise) if this would replace a more complex term by a more simple
     # one, both corresponding to operands of the bitwise.
-    def __check_transform_bitwise_replace_for_comb(self, toXor, idx, bitw, factor, cOp, cIdx, combIdx) -> Optional[int]:
+    def __check_transform_bitwise_replace_for_comb(self, toXor : bool, idx : int, bitw : Node, factor : int, cOp : Node, cIdx : int, combIdx : int) -> Optional[int]:
         n = combIdx
 
         diff = cOp.get_copy()
@@ -4721,7 +4721,7 @@ class Node():
     # one, both corresponding to operands of the bitwise. Here the difference
     # between the sum of candidate terms and the bitwise expression's operand
     # is given, together with a list of the terms' indices.
-    def __check_transform_bitwise_replace_for_diff(self, toXor, idx, bitw, factor, diff, cIdx, indices) -> Optional[int]:
+    def __check_transform_bitwise_replace_for_diff(self, toXor : bool, idx : int, bitw : Node, factor : int, diff : Node, cIdx : int, indices : list[int]) -> Optional[int]:
         return self.__check_transform_bitwise_replace_for_diff_full(toXor, idx, bitw, factor, diff, cIdx, indices)
 
     # Try to transform the given bitwise expression, which is either a
@@ -4731,7 +4731,7 @@ class Node():
     # (otherwise) if this would replace a more complex term by a more simple
     # one, both corresponding to operands of the bitwise. Transform the
     # expression if the given difference is a constant.
-    def __check_transform_bitwise_replace_for_diff_full(self, toXor, idx, bitw, factor, diff, cIdx, indices) -> Optional[int]:
+    def __check_transform_bitwise_replace_for_diff_full(self, toXor : bool, idx : int, bitw : Node, factor : int, diff : Node, cIdx : int, indices : list[int]) -> Optional[int]:
         if diff.type != NodeType.CONSTANT: return None
 
         # We found a match. First append the less complex operand as a term.
@@ -4958,7 +4958,7 @@ class Node():
 
     # Returns a list of all terms in this sum node which are constant multiples
     # of bitwise operations of given type with a constant operator.
-    def __collect_indices_of_bitw_with_constants_in_sum(self, expType) -> list:
+    def __collect_indices_of_bitw_with_constants_in_sum(self, expType : NodeType) -> list:
         assert(self.type == NodeType.SUM)
 
         # A list containing tuples of factors and lists of indices.
@@ -4994,7 +4994,7 @@ class Node():
     # a constant operator, returns the factor. Otherwise returns None.
     # Additionally returns the bitwise operation or None, resp. If expType is
     # None, considers all binary bitwise operations.
-    def __get_factor_of_bitw_with_constant(self, expType=None) -> tuple[int, Node]:
+    def __get_factor_of_bitw_with_constant(self, expType : Optional[NodeType] =None) -> tuple[int, Node]:
         factor = None
         node = None
 
@@ -5037,7 +5037,7 @@ class Node():
     # formula "(a&x) + (b&x) == a+b&x" (if conj is True) or
     #"(a|x) + (b|x) == (a+b|x) + x" (otherwise) if a and b are constants that
     # have no set bit in common.
-    def __check_bitw_pairs_with_constants_impl(self, conj) -> bool:
+    def __check_bitw_pairs_with_constants_impl(self, conj : bool) -> bool:
         assert(self.type == NodeType.SUM)
 
         expType = NodeType.CONJUNCTION if conj else NodeType.INCL_DISJUNCTION
@@ -5207,7 +5207,7 @@ class Node():
 
     # If the given factors and node types allow merging the nodes, returns a
     # factor for merging. Otherwise returns None.
-    def __get_factor_for_merging_bitwise(self, fac1, fac2, type1, type2) -> int:
+    def __get_factor_for_merging_bitwise(self, fac1 : int, fac2 : int, type1 : NodeType, type2 : NodeType) -> int:
         if type1 == type2:
             if (fac1 - fac2) % self.__modulus != 0: return None
             return fac1
@@ -5242,7 +5242,7 @@ class Node():
     #   -2*(a&x) + (b^x) -> 2*(~(a+b)&x) - x + b
     #    2*(a|x) + (b^x) -> 2*(~(a+b)&x) + x + 2*a + b
     #   -(a&x) + (b|x) -> (~(a+b)&x) + b
-    def __merge_bitwise_terms(self, firstIdx, secIdx, first, second, factor, firstConst, secConst) -> tuple[int, bool, int]:
+    def __merge_bitwise_terms(self, firstIdx : int, secIdx : int, first : Node, second : Node, factor : int, firstConst : int, secConst : int) -> tuple[int, bool, int]:
         bitwFactor, add, opfac = self.__merge_bitwise_terms_and_get_opfactor(firstIdx, secIdx, first, second,
                                                                              factor, firstConst, secConst)
         if opfac == 0: return bitwFactor, True, add
@@ -5259,7 +5259,7 @@ class Node():
     # second bitwise yet, even if it would be to be replaced by the operand.
     # Returns the new factor of the merged term,  an optional constant to be
     # added later on and a factor for the operand.
-    def __merge_bitwise_terms_and_get_opfactor(self, firstIdx, secIdx, first, second, factor, firstConst, secConst) -> tuple[int, int, int]:
+    def __merge_bitwise_terms_and_get_opfactor(self, firstIdx : int, secIdx : int, first : Node, second : Node, factor : int, firstConst : int, secConst : int) -> tuple[int, int, int]:
         constSum = firstConst + secConst
         constNeg = -constSum - 1
         bitwFactor = self.__get_bitwise_factor_for_merging_bitwise(factor, first.type, second.type)
@@ -5293,21 +5293,21 @@ class Node():
 
     # For merging bitwise operations with given types and given factor, returns
     # the new constant operand of the bitwise.
-    def __get_const_operand_for_merging_bitwise(self, constSum, type1, type2) -> int:
+    def __get_const_operand_for_merging_bitwise(self, constSum : int, type1 : NodeType, type2 : NodeType) -> int:
         if type1 == type2 and type1 != NodeType.EXCL_DISJUNCTION: return constSum
         # Return ~(const1 + const2).
         return -constSum - 1
 
     # For merging bitwise operations with given types and given factor, returns
     # the resulting factor of the new bitwise.
-    def __get_bitwise_factor_for_merging_bitwise(self, factor, type1, type2) -> int:
+    def __get_bitwise_factor_for_merging_bitwise(self, factor : int, type1 : NodeType, type2 : NodeType) -> int:
         if type1 == NodeType.EXCL_DISJUNCTION or type2 == NodeType.EXCL_DISJUNCTION: return 2 * factor
         return factor
 
     # For merging bitwise operations with given types and given resulting
     # factor, returns the factor of their common second operand to be added.
     # Additionally returns a constant to be added.
-    def __get_operand_factor_and_constant_for_merging_bitwise(self, factor, type1, type2, const1, const2) -> tuple[int, int]:
+    def __get_operand_factor_and_constant_for_merging_bitwise(self, factor : int, type1 : NodeType, type2 : NodeType, const1 : int, const2 : int) -> tuple[int, int]:
         if type1 == type2:
             if type1 == NodeType.CONJUNCTION: return 0, 0
             if type1 == NodeType.INCL_DISJUNCTION: return factor, 0
@@ -5444,7 +5444,7 @@ class Node():
     # Returns a pair of factors for merging a bitwise operations with a
     # constant into the other two such. Returns None, None if this is not
     # possible.
-    def __get_factors_for_merging_triple(self, type1, type2, type0, fac1, fac2, fac0, const1, const2, const0) -> tuple[Optional[int], Optional[int]]:
+    def __get_factors_for_merging_triple(self, type1 : NodeType, type2 : NodeType, type0 : NodeType, fac1 : int, fac2 : int, fac0 : int, const1: int, const2 : int, const0 : int) -> tuple[Optional[int], Optional[int]]:
         # Check whether the constants's 1 positions are disjunct.
         if (const1 & const0) != 0: return None, None
         if (const2 & const0) != 0: return None, None
@@ -5466,7 +5466,7 @@ class Node():
 
     # If the given factors and node types allow merging the nodes, returns a
     # factor for merging. Otherwise returns None, None.
-    def __get_possible_factor_for_merging_bitwise(self, fac1, type1, type0):
+    def __get_possible_factor_for_merging_bitwise(self, fac1 : int, type1 : NodeType, type0 : NodeType):
         if type1 == NodeType.EXCL_DISJUNCTION:
             if type0 == NodeType.CONJUNCTION: return -2*fac1
             if type0 == NodeType.INCL_DISJUNCTION: return 2*fac1
@@ -5509,7 +5509,7 @@ class Node():
     #    (x&y) + (~x&y) -> y
     #    (x|y) + (~x|y) -> -1 + y
     #    (x^y) + (~x^y) -> -1
-    def __check_bitw_pairs_with_inverses_impl(self, expType) -> bool:
+    def __check_bitw_pairs_with_inverses_impl(self, expType : NodeType) -> bool:
         assert(self.type == NodeType.SUM)
 
         l = self.__collect_indices_of_bitw_without_constants_in_sum(expType)
@@ -5585,7 +5585,7 @@ class Node():
     # of bitwise operations of given type with no constant operator. The nodes
     # are partitioned wrt. their factors and their numbers of operands in the
     # bitwise expressions.
-    def __collect_indices_of_bitw_without_constants_in_sum(self, expType):
+    def __collect_indices_of_bitw_without_constants_in_sum(self, expType : NodeType):
         assert(self.type == NodeType.SUM)
 
         # A list containing tuples of factors and lists of indices.
@@ -5614,7 +5614,7 @@ class Node():
     # no constant operand, returns the factor. Otherwise returns None.
     # Additionally returns the bitwise operation or None, resp. If expType is
     # None, considers all binary bitwise operations.
-    def __get_factor_of_bitw_without_constant(self, expType=None) -> tuple[Optional[int], Node]:
+    def __get_factor_of_bitw_without_constant(self, expType : Optional[NodeType] = None) -> tuple[Optional[int], Node]:
         factor = None
         node = None
 
@@ -5641,7 +5641,7 @@ class Node():
     # If this node and the given one differ in ()their type and) only one
     # child, returns this child's indices wrt this and the other node.
     # Otherwise returns None.
-    def __get_only_differing_child_indices(self, other) -> Optional[tuple[int, int]]:
+    def __get_only_differing_child_indices(self, other : Node) -> Optional[tuple[int, int]]:
         if self.type == other.type:
             # In this case the nodes would have to have same child count.
             if len(self.children) != len(other.children): return None
@@ -5665,7 +5665,7 @@ class Node():
     # number of children and to have same type or exactly 2 children, differ in
     # only one child, returns this child's indices wrt this and the other node.
     # Otherwise returns None.
-    def __get_only_differing_child_indices_same_len(self, other) -> Optional[tuple[int, int]]:
+    def __get_only_differing_child_indices_same_len(self, other : Node) -> Optional[tuple[int, int]]:
         assert(self.type == other.type or (len(self.children) == 2))
         assert(len(self.children) == len(other.children))
 
@@ -5696,7 +5696,7 @@ class Node():
     # number of children and to have different typea, differ in only one child,
     # returns this child's indices wrt this and the other node. Otherwise
     # returns None. This node is required to have 2 children.
-    def __get_only_differing_child_indices_diff_len(self, other) -> Optional[tuple[int, int]]:
+    def __get_only_differing_child_indices_diff_len(self, other : Node) -> Optional[tuple[int, int]]:
         assert(self.type != other.type)
         assert(len(self.children) == 2)
         assert(len(other.children) > 2)
@@ -5724,7 +5724,7 @@ class Node():
     #    (x|y) - (~x&y) -> x
     #    (x^y) - 2*(~x&y) -> x - y
     #    (x^y) + 2*(~x|y) -> -2 - x + y
-    def __merge_inverse_bitwise_terms(self, firstIdx, secIdx, first, second, factor, indices) -> tuple[bool, bool, tuple[int, int, int]]:
+    def __merge_inverse_bitwise_terms(self, firstIdx : int, secIdx : int, first : Node, second : Node, factor : int, indices : list[int]) -> tuple[bool, bool, tuple[int, int, int]]:
         type1 = first.type
         type2 = second.type
         invOpFac, sameOpFac, add = self.__get_operand_factors_and_constant_for_merging_inverse_bitwise(factor, type1, type2)
@@ -5773,7 +5773,7 @@ class Node():
     # For merging bitwise operations with given types and given factor, returns
     # the factor of their (inverse) differing operand, the factor of their
     # common operand(s) to be added and a constant to be added.
-    def __get_operand_factors_and_constant_for_merging_inverse_bitwise(self, factor, type1, type2) -> tuple[int, int, int]:
+    def __get_operand_factors_and_constant_for_merging_inverse_bitwise(self, factor : int, type1 : NodeType, type2 : NodeType) -> tuple[int, int, int]:
         if type1 == type2:
             if type1 == NodeType.CONJUNCTION: return 0, factor, 0
             if type1 == NodeType.INCL_DISJUNCTION: return 0, factor, -factor
@@ -6022,7 +6022,7 @@ class Node():
     # Mark all nodes with labels indicating whether their subexpressions are
     # completely bitwise, linear or nonlinear expressions. If restrictedScope
     # is True, the child nodes are assumed to be already marked.
-    def mark_linear(self, restrictedScope=False) -> None:
+    def mark_linear(self, restrictedScope : bool = False) -> None:
         for c in self.children:
             if not restrictedScope or c.state == NodeState.UNKNOWN: c.mark_linear()
 
@@ -6159,7 +6159,7 @@ class Node():
 
     # Returns, if existent, a node representing a subexpression whose
     # substitution may make the expression more suitable for simplification.
-    def get_node_for_substitution(self, ignoreList) -> Node:
+    def get_node_for_substitution(self, ignoreList : list[Node]) -> Node:
         if self.__is_contained(ignoreList): return None
 
         if self.__is_bitwise_op():
@@ -6185,18 +6185,18 @@ class Node():
         return None
 
     # Returns true iff this node is equal to any contained in the given list.
-    def __is_contained(self, l) -> bool:
+    def __is_contained(self, l : list[Node]) -> bool:
         return self.__get_index_in_list(l) != None
 
     # Returns true iff this node is equal to any contained in the given list.
-    def __get_index_in_list(self, l) -> Optional[int]:
+    def __get_index_in_list(self, l : list[Node]) -> Optional[int]:
         for i in range(len(l)):
             if self.equals(l[i]): return i
         return None
 
     # Substitute all nodes equivalent to the given one by a variable with given
     # name. Returns true iff at least one substitution is performed.
-    def substitute_all_occurences(self, node, vname, onlyFullMatch=False, withMod=True) -> bool:
+    def substitute_all_occurences(self, node : Node, vname : str, onlyFullMatch : bool = False, withMod : bool = True) -> bool:
         # In powers, only substitute in their bases.
         if self.type == NodeType.POWER:
             return self.children[0].substitute_all_occurences(node, vname, onlyFullMatch, withMod)
@@ -6246,7 +6246,7 @@ class Node():
     # has to be multiplied by -1. Returns a flag indicating whether a
     # substition has been performed and another flag indicating whether no
     # other substitution is possible.
-    def __try_substitute_node(self, node, vname, onlyFull, inverse=False) -> tuple[bool, bool]:
+    def __try_substitute_node(self, node : Node, vname : str, onlyFull : bool , inverse : bool = False) -> tuple[bool, bool]:
         if self.equals(node):
             var = self.__new_variable_node(vname)
             if inverse: var.__multiply_by_minus_one()
@@ -6271,7 +6271,7 @@ class Node():
     # variable with given name and subtract all other terms it has not in
     # common with the given node. If negated is True, the variable node has to
     # be multiplied by -1.
-    def __try_substitute_part_of_sum(self, node, vname, inverse=False) -> bool:
+    def __try_substitute_part_of_sum(self, node : Node, vname : str, inverse : bool =False) -> bool:
         # The given node is no sum.
         if node.type != NodeType.SUM or len(node.children) <= 1: return False
 
@@ -6284,7 +6284,7 @@ class Node():
     # If this node is a sum which has at most one term in common with the given
     # node, substitute it by a variable with given name and subtract all other
     # terms it has not in common with the given node.
-    def __try_substitute_part_of_sum_in_sum(self, node, vname, inverse) -> bool:
+    def __try_substitute_part_of_sum_in_sum(self, node : Node , vname : str, inverse : bool) -> bool:
         assert(self.type == NodeType.SUM)
 
         common = self.__get_common_children(node)
@@ -6312,7 +6312,7 @@ class Node():
         return True
 
     # Returns a list of common children of this node and the given one.
-    def __get_common_children(self, other) -> list[Node]:
+    def __get_common_children(self, other : Node) -> list[Node]:
         assert(other.type == self.type)
 
         common = []
@@ -6328,7 +6328,7 @@ class Node():
 
     # If this node is equal to a child of the given node, substitute it by a
     # variable with given name and subtract all other terms.
-    def __try_substitute_part_of_sum_term(self, node, vname, inverse) -> bool:
+    def __try_substitute_part_of_sum_term(self, node : Node, vname : str, inverse : bool) -> bool:
         assert(self.type != NodeType.SUM)
 
         if not node.__has_child(self): return False
@@ -6352,7 +6352,7 @@ class Node():
 
 
     # Returns the number of nodes with a type included in the given list.
-    def count_nodes(self, typeList=None) -> int:
+    def count_nodes(self, typeList=list[NodeType]) -> int:
         cnt = 0
         for child in self.children: cnt += child.count_nodes(typeList)
 
@@ -6361,7 +6361,7 @@ class Node():
 
     # Returns the MBA alternation of this node, assuming that it represents a
     # linear MBA. That is, arithmetic operations may not occur in bitwise ones.
-    def compute_alternation_linear(self, hasParent=False) -> int:
+    def compute_alternation_linear(self, hasParent : bool = False) -> int:
         if self.type in [NodeType.SUM, NodeType.PRODUCT]:
             assert(len(self.children) > 0)
             cnt = 0
@@ -6380,7 +6380,7 @@ class Node():
     # operations within bitwise operations and vice versa. The node has a
     # bitwise operation as a parent if parentBitwise is true, an arithmetic
     # operation if it is false and no parent if it is None.
-    def compute_alternation(self, parentBitwise=None) -> int:
+    def compute_alternation(self, parentBitwise : bool = None) -> int:
         if self.type == NodeType.VARIABLE: return 0
         if self.type == NodeType.CONSTANT: return int(parentBitwise != None and parentBitwise == True)
 
@@ -6392,7 +6392,7 @@ class Node():
 
     # Polish this node for a nice final view, assuming that no further
     # refinement or simplification will be performed.
-    def polish(self, parent=None) -> None:
+    def polish(self, parent : Node = None) -> None:
         for c in self.children: c.polish(self)
 
         # Start (and end) with ordering for standardization in the steps in
@@ -6470,7 +6470,7 @@ class Node():
 
     # If this node is a bitwise negation transformed into an arithmetic form,
     # transform it into a bitwise negation.
-    def __insert_bitwise_negations(self, parent) -> None:
+    def __insert_bitwise_negations(self, parent : Node) -> None:
         child, factor = self.__get_opt_transformed_negated_with_factor()
         assert((child != None) == (factor != None))
 
@@ -6551,7 +6551,7 @@ class Node():
         self.children.sort()
 
     # Used for sorting.
-    def __lt__(self, other) -> bool:
+    def __lt__(self, other : Node) -> bool:
         if self.type == NodeType.CONSTANT: return True
         if other.type == NodeType.CONSTANT: return False
 
@@ -6583,7 +6583,7 @@ class Node():
     # Verify that this node is equivalent to the given node via evaluation on
     # inputs with given bit count. Requires that all variables which occur in
     # this node also occur in other.
-    def check_verify(self, other, bitCount=2) -> bool:
+    def check_verify(self, other : Node, bitCount : int = 2) -> bool:
         variables = []
         other.collect_and_enumerate_variables(variables)
         self.enumerate_variables(variables)
@@ -6640,7 +6640,7 @@ class Node():
         return 1
 
     # Print information about the node.
-    def print(self, level=0) -> None:
+    def print(self, level : int = 0) -> None:
         indent = 2 * level
         prefix = indent*" " + "[" + str(level) + "] "
 
