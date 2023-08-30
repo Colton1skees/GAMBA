@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
+from __future__ import annotations
 from enum import Enum
 
 
@@ -23,7 +23,7 @@ class BitwiseType(Enum):
 # flag which each node is equipped with.
 class Bitwise():
     # Initialize a bitwise node with given type.
-    def __init__(self, bType, negated=False, vidx=-1):
+    def __init__(self, bType : BitwiseType, negated : bool = False, vidx : int = -1) -> None:
         assert((vidx >= 0) == (bType == BitwiseType.VARIABLE))
 
         self.__type = bType
@@ -32,24 +32,24 @@ class Bitwise():
         self.__children = []
 
     # Add the given node as a child node.
-    def add_child(self, child):
+    def add_child(self, child : Bitwise) -> None:
         self.__children.append(child)
 
     # Add a child node for a variable with given index.
-    def add_variable(self, vidx, negated=False):
+    def add_variable(self, vidx : int, negated : bool = False) -> None:
         self.add_child(Bitwise(BitwiseType.VARIABLE, negated, vidx))
 
     # Returns the number of children.
-    def child_count(self):
+    def child_count(self) -> int:
         return len(self.__children)
 
     # Returns this node's first child.
-    def first_child(self):
+    def first_child(self) -> Bitwise:
         return self.__children[0]
 
     # Returns a string representation of this node's operation. Requires that
     # this node represents a binary operation.
-    def __op_to_string(self):
+    def __op_to_string(self) -> str:
         assert(self.__type > BitwiseType.VARIABLE)
 
         if self.__type == BitwiseType.CONJUNCTION: return "&"
@@ -58,7 +58,7 @@ class Bitwise():
 
     # Returns a string representation of this node, including all its
     # (transitive) children.
-    def to_string(self, variables=[], withParentheses=False):
+    def to_string(self, variables : list[str] = [], withParentheses : bool = False) -> str:
         if self.__type == BitwiseType.TRUE:
             return "0" if self.__negated else "1"
 
@@ -81,7 +81,7 @@ class Bitwise():
 
     # Returns true iff this node's children are all contained in the
     # given one's children'.
-    def __are_all_children_contained(self, other):
+    def __are_all_children_contained(self, other : Bitwise) -> bool:
         assert(other.__type == self.__type)
 
         oIndices = list(range(len(other.__children)))
@@ -98,7 +98,7 @@ class Bitwise():
         return True
 
     # Returns true iff this node equals the given one.
-    def equals(self, other, negated=False):
+    def equals(self, other : Bitwise, negated : bool = False) -> bool:
         if (self.__type != other.__type): return False
         if self.__vidx != other.__vidx: return False
         if (self.__negated == other.__negated) == negated: return False
@@ -107,7 +107,7 @@ class Bitwise():
         return self.__are_all_children_contained(other)
 
     # Copy the only child's content to this node.
-    def __pull_up_child(self):
+    def __pull_up_child(self) -> None:
         assert(len(self.__children) == 1)
         child = self.__children[0]
 
@@ -117,14 +117,14 @@ class Bitwise():
         self.__children = child.__children
 
     # Copy the given node's content to this node.
-    def __copy(self, node):
+    def __copy(self, node : Bitwise) -> None:
         self.__type = node.__type
         self.__vidx = node.__vidx
         self.__negated = node.__negated
         self.__children = node.__children
 
     # Copy this node's content to a new node.
-    def __get_copy(self):
+    def __get_copy(self) -> Bitwise:
         n = Bitwise(self.__type, self.__negated, self.__vidx)
         n.__children = []
 
@@ -137,14 +137,14 @@ class Bitwise():
     # That is, try to write the bitwise expression more simply, possibly
     # introducing exclusive disjunctions, flipping negations or extracting
     # common nodes of children.
-    def refine(self):
+    def refine(self) -> None:
         MAX_IT = 10
 
         for i in range(MAX_IT):
             if not self.__refine_step(): return
 
     # Perform one step of the refinement, see refine().
-    def __refine_step(self):
+    def __refine_step(self) -> bool:
         changed = False
 
         for child in self.__children:
@@ -158,7 +158,7 @@ class Bitwise():
 
     # Try to replace any subexpressions with an exclusive disjunction, see
     # __try_insert_xor().
-    def __check_insert_xor(self):
+    def __check_insert_xor(self) -> bool:
         if self.__type not in [BitwiseType.CONJUNCTION, BitwiseType.INCL_DISJUNCTION]:
             return
 
@@ -179,7 +179,7 @@ class Bitwise():
 
     # Try to insert an exclusive disjunction applying the rules
     # "(x|y) & (~x|~y) -> (x^y)" or "(x&y) | (~x&~y) -> (x^~y)".
-    def __try_insert_xor(self, i, j):
+    def __try_insert_xor(self, i : int, j : int) -> bool:
         child1 = self.__children[i]
         child2 = self.__children[j]
         
@@ -218,7 +218,7 @@ class Bitwise():
     # Check whether the subexpression corresponding to this node becomes
     # simpler when flipping the negation of this node together with that of its
     # children.
-    def __check_flip_negation(self):
+    def __check_flip_negation(self) -> bool:
         if len(self.__children) == 0: return False
 
         changed = False
@@ -243,14 +243,14 @@ class Bitwise():
         return True
 
     # Returns true iff all this node's children have the given type.
-    def __do_all_children_have_type(self, t):
+    def __do_all_children_have_type(self, t : BitwiseType) -> bool:
         for child in self.__children:
             if child.__type != t: return False
             if child.__negated: return False
         return True
 
     # Check whether a common node can be factored out of this node's children.
-    def __check_extract(self):
+    def __check_extract(self) -> bool:
         t = self.__type
         if t != BitwiseType.CONJUNCTION and t != BitwiseType.INCL_DISJUNCTION: return False
 
@@ -278,7 +278,7 @@ class Bitwise():
         return True
 
     # Try to factor a common node out of this node's children.
-    def __try_extract(self):
+    def __try_extract(self) -> Bitwise:
         assert(self.__type in [BitwiseType.CONJUNCTION, BitwiseType.INCL_DISJUNCTION])
 
         common = self.__get_common_child()
@@ -291,7 +291,7 @@ class Bitwise():
 
     # Returns a node, if existent, which appear in all children and hence can
     # be factored out.
-    def __get_common_child(self):
+    def __get_common_child(self) -> Bitwise:
         assert(self.__type in [BitwiseType.CONJUNCTION, BitwiseType.INCL_DISJUNCTION])
 
         # It is enough to consider the first child and check for all of its
@@ -305,7 +305,7 @@ class Bitwise():
 
     # Returns true iff the given node can be factored out from all children but
     # the first one.
-    def __has_child_in_remaining_children(self, node):
+    def __has_child_in_remaining_children(self, node : Bitwise) -> bool:
         assert(self.__type in [BitwiseType.CONJUNCTION, BitwiseType.INCL_DISJUNCTION])
 
         for child in self.__children[1:]:
@@ -313,13 +313,13 @@ class Bitwise():
         return True
 
     # Returns true iff this node has a child equal to the given node.
-    def __has_child(self, node):
+    def __has_child(self, node : Bitwise) -> bool:
         for child in self.__children:
             if child.equals(node): return True
         return False
 
     # Remove the given node from this node's children.
-    def __remove_child(self, node):
+    def __remove_child(self, node : Bitwise) -> None:
         for i in range(len(self.__children)):
             if self.__children[i].equals(node):
                 del self.__children[i]
