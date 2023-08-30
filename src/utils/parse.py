@@ -231,7 +231,7 @@ class Parser():
         return self.__multiply_by_minus_one(node)
 
     # Returns a node which is the negative of the given node.
-    def __multiply_by_minus_one(self, node) -> Node:
+    def __multiply_by_minus_one(self, node : Node) -> Node:
         if node.type == NodeType.CONSTANT:
             node.constant = -node.constant
             return node
@@ -409,7 +409,7 @@ class Parser():
 
     # Returns the character at position idx of expr, increments idx and skips
     # spaces.
-    def __get(self, skipSpace=True) -> str:
+    def __get(self, skipSpace : bool = True) -> str:
         c = self.__peek()
         self.__idx += 1
 
