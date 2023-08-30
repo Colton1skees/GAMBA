@@ -1,0 +1,11 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "austin",
+            "file": "gamba_api.py",
+            "args": ["x+y"],
+            "label": "Profile gamba_api.py",
+        }
+    ]
+}

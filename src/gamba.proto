@@ -1,0 +1,37 @@
+package gamba;
+
+enum SimplifyResponseCode {
+	// Indicates a successful simplification.
+	SIMPLIFY_RESPONSE_SUCCESS = 0;
+
+	// Indicates that simplification failed due to the input expression being non linear.
+	// This will only happen if you explicitly request that non linear expressions are rejected.
+	SIMPLIFY_RESPONSE_NOT_LINEAR = 1;
+
+	// Indicates that simplification failed for an unknown reason.
+	SIMPLIFY_RESPONSE_FAILURE = 2;
+}
+
+// The request message containing the user's name.
+message SimplifyCommand {
+  // String representation of the expression.
+  string expression = 1;
+
+  // Bit width of the expression.
+  int32 bit_size = 2;
+
+  // If enabled, simplification will throw an error if the input is not linear.
+  bool check_linear = 3;
+}
+
+message SimplifyReply {
+	SimplifyResponseCode response_code = 1;
+
+	optional string simplified_expression = 2;
+}
+
+// Service for invoking GAMBA.
+service Gamba {
+  // Simplifies the input AST & returns it.
+  rpc Simplify (SimplifyCommand) returns (SimplifyReply) {}
+}

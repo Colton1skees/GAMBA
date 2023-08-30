@@ -8,6 +8,8 @@ import sys
 import traceback
 import multiprocessing
 import numpy as np
+from flask import Flask
+from flask_restful import Resource, Api, reqparse
 try: import z3
 except ModuleNotFoundError: pass
 
@@ -15,7 +17,7 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 sys.path.insert(0, os.path.join(currentdir, "utils"))
 from parse import Parser, parse, Node, NodeType, NodeState
 from node import mod_red, popcount
-from simplify import simplify_linear_mba, compute_bitwise_complexity
+from simplify import simplify_linear_mba, check_linear, compute_bitwise_complexity
 
 # Verify that the original expression and the simplified one are equivalent
 # using Z3.
@@ -61,6 +63,8 @@ def verify_using_z3(orig, simpl, bitCount, timeout=None):
 
     return str(result) == "unsat"
 
+
+parser = reqparse.RequestParser()
 
 # The main simplification class which stores relevant parameters such as the
 # number of bits.
@@ -641,6 +645,11 @@ class GeneralSimplifier():
 
     # Simplify the given MBA and check the result if required.
     def simplify(self, expr, useZ3=False):
+        #self.__simplify_subexpression(expr, None)
+        #expr.polish()
+        #return expr
+
+
         manager = multiprocessing.Manager()
         returnDict = manager.dict()
         p = multiprocessing.Process(target=self._simplify, args=(expr, returnDict))
@@ -677,6 +686,64 @@ def simplify_mba(expr, bitCount, useZ3=False, modRed=False, verifBitCount=None):
     simpl = simplifier.simplify(expr, useZ3)
     return simpl
 
+global_simplifier = GeneralSimplifier(64, False, None)
+
+class GambaRoute(Resource):
+    def get(self):
+        parser.add_argument("expression", type=str, location='args')
+        parser.add_argument("bit_size", type=str, location='args')
+        parser.add_argument("check_linear", type=str, location='args')
+        args = parser.parse_args()
+
+        # String representation of the expression.
+        expression = args["expression"]
+        # Bit width of the expression.
+        bit_size = int(args["bit_size"])
+        # Indicates whether we should require the expression to be linear.
+        linear_requested = int(args["check_linear"])
+
+        # If check_linear is requested then we treat this
+        # as if it is a linear MBA.
+        if linear_requested:
+            if not check_linear(expression, bit_size):
+                return "ERROR_NOT_LINEAR"
+            return str(simplify_linear_mba(expression, bit_size, False))
+
+        else:
+            # return str(simplify_mba(expression, bit_size))
+            return str(global_simplifier.simplify(expr, bit_size))
+    def post(self):
+        parser.add_argument("expression", type=str, location='args')
+        parser.add_argument("bit_size", type=str, location='args')
+        parser.add_argument("check_linear", type=str, location='args')
+        args = parser.parse_args()
+
+        # String representation of the expression.
+        expression = args["expression"]
+        # Bit width of the expression.
+        bit_size = int(args["bit_size"])
+        # Indicates whether we should require the expression to be linear.
+        linear_requested = int(args["check_linear"])
+
+        # If check_linear is requested then we treat this
+        # as if it is a linear MBA.
+        if linear_requested:
+            if not check_linear(expression, bit_size):
+                return "ERROR_NOT_LINEAR"
+            return str(simplify_linear_mba(expression, bit_size, False))
+
+        else:
+            return str(simplify_mba(expression, bit_size))
+
+
+
+def start_api(server_port):
+    app = Flask(__name__)
+    api = Api(app)
+    api.add_resource(GambaRoute, '/gamba/')
+    app.run(debug=False, port=server_port)
+    while True:
+        continue
 
 # Print options.
 def print_usage():
@@ -688,6 +755,8 @@ def print_usage():
     print("    -z:    enable a check for valid simplification using Z3")
     print("    -m:    enable a reduction of all constants modulo 2**b where b is the bit count")
     print("    -v:    specify a bit count for verification for nonlinear input (default: no verification)")
+    print("    -a:    enable a gamba REST API & make the process persist (default: false)")
+    print("    -p:    specify the port of the rest server (default is 1111)")
 
 if __name__ == "__main__":
     argc = len(sys.argv)
@@ -697,6 +766,8 @@ if __name__ == "__main__":
     modRed = False
     verifBitCount = None
     expressions = []
+    useRestApi = False
+    port = 5000
 
     i = 0
     while i < argc - 1:
@@ -714,8 +785,17 @@ if __name__ == "__main__":
 
             bitCount = int(sys.argv[i])
 
+        elif sys.argv[i] == "-p":
+            i = i + 1
+            if i == argc:
+                print_usage()
+                sys.exit("Error: No port given!")
+
+            bitCount = int(sys.argv[i])
+
         elif sys.argv[i] == "-z": useZ3 = True
         elif sys.argv[i] == "-m": modRed = True
+        elif sys.argv[i] == "-a": useRestApi = True
 
         elif sys.argv[i] == "-v":
             i = i + 1
@@ -726,6 +806,9 @@ if __name__ == "__main__":
             verifBitCount = int(sys.argv[i])
 
         else: expressions.append(sys.argv[i])
+
+    if useRestApi:
+        start_api(port);
 
     if len(expressions) == 0: sys.exit("No expressions to simplify given!")
 
