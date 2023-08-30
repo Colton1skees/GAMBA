@@ -2564,7 +2564,7 @@ class Node():
         return self.__new_node_with_children(NodeType.PRODUCT, [self.get_copy(), other.get_copy()])
 
     # Multiply this node by the given factor, which is assumed to be no sum.
-    def __multiply_with_node_no_sum(self, other : Node) -> Node:
+    def __multiply_with_node_no_sum(self, other : Node) -> None:
         assert(other.type != NodeType.SUM)
 
         if self.type == NodeType.CONSTANT:
