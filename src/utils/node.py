@@ -231,14 +231,14 @@ class Node():
     # Initialize the member vidx (index of a variable) for all nodes
     # representing variables and store the variables in the given list in the
     # corresponding order.
-    def collect_and_enumerate_variables(self, variables : list[Node]):
+    def collect_and_enumerate_variables(self, variables : list[Node]) -> None:
         self.collect_variables(variables)
         variables.sort(key = lambda v: (len(v), v))
         self.enumerate_variables(variables)
 
     # Collect all variable names occuring in the expression corresponding to
     # this node.
-    def collect_variables(self, variables : list[Node]):
+    def collect_variables(self, variables : list[Node]) -> None:
         if self.type == NodeType.VARIABLE:
             # The variable is not ready known yet.
             if not self.vname in variables: variables.append(self.vname)
@@ -247,7 +247,7 @@ class Node():
 
     # Initialize the member vidx (index of a variable) for all nodes
     # representing variables corresponding to the given list of variables.
-    def enumerate_variables(self, variables : list[Node]):
+    def enumerate_variables(self, variables : list[Node]) -> None:
         if self.type == NodeType.VARIABLE:
             assert(self.vname in variables)
             self.__vidx = variables.index(self.vname)
@@ -257,7 +257,7 @@ class Node():
     # Returns the maximum integer for which this node has a variable name
     # according to the given start and end of variable names. Returns None if
     # there is no such variable name.
-    def get_max_vname(self, start : int, end : int) -> int:
+    def get_max_vname(self, start : int, end : int) -> Optional[int]:
         if self.type == NodeType.VARIABLE:
             if self.vname[:len(start)] != start: return None
             if self.vname[-len(end):] != end: return None
@@ -299,7 +299,7 @@ class Node():
 
     # Apply the node's binary operation to the given values. Requires that this
     # node is a conjunction, an inclusive or an exclusive disjunction.
-    def __apply_bitwise_binop(self, x : int, y : int):
+    def __apply_bitwise_binop(self, x : int, y : int) -> Node:
         if self.type == NodeType.CONJUNCTION: return x&y
         if self.type == NodeType.EXCL_DISJUNCTION: return x^y
         if self.type == NodeType.INCL_DISJUNCTION: return x|y
@@ -391,7 +391,7 @@ class Node():
 
 
     # Returns a node with given type.
-    def __new_node(self, t : NodeType):
+    def __new_node(self, t : NodeType) -> Node:
         return Node(t, self.__modulus, self.__modRed)
 
     # Returns a node with type CONSTANT and given constant value.
@@ -439,7 +439,7 @@ class Node():
     # them such that the constant child, if existent, is always the first one,
     # try to flatten the tree hierarchy and sort the variables in commutative
     # binary expressions.
-    def __refine_step_1(self, restrictedScope : bool = False):
+    def __refine_step_1(self, restrictedScope : bool = False) -> None:
         if not restrictedScope:
             for c in self.children: c.__refine_step_1()
 
@@ -702,7 +702,7 @@ class Node():
 
     # Copy the given node's content to this node and make sure that all
     # children and their children etc., if existent, are copied too.
-    def __copy_all(self, node : Node):
+    def __copy_all(self, node : Node) -> None:
         self.type = node.type
         self.state = node.state
         self.children = []
@@ -2750,7 +2750,7 @@ class Node():
 
     # Expand this node, which is assumed to be a power of a sum with constant
     # exponent, by multiplying its base the corresponding number of times.
-    def __expand_power(self, exp) -> Node:
+    def __expand_power(self, exp : int) -> Node:
         base = self.children[0]
         node = base.get_copy()
         assert(node.type == NodeType.SUM)
@@ -2801,7 +2801,7 @@ class Node():
 
     # Store the factors of this node in the given lists.
     def __collect_all_factors_of_sum(self) -> tuple[list[Node], list[Any], list[IndexWithMultitude]]:
-        nodes : list[Node] = []
+        nodes = []
         nodesToTerms = []
         termsToNodes = []
 
@@ -2814,7 +2814,7 @@ class Node():
         return nodes, nodesToTerms, termsToNodes
 
     # Store the factors of this node in the given lists.
-    def __collect_factors(self, i, multitude : int, nodes : list[Node], nodesToTerms : list[Any], termsToNodes : list[IndexWithMultitude]):
+    def __collect_factors(self, i : int, multitude : int, nodes : list[Node], nodesToTerms : list[Any], termsToNodes : list[IndexWithMultitude]):
         if self.type == NodeType.PRODUCT:
             for factor in self.children:
                 factor.__collect_factors(i, multitude, nodes, nodesToTerms, termsToNodes)
@@ -2826,7 +2826,7 @@ class Node():
             self.__check_store_factor(i, multitude, nodes, nodesToTerms, termsToNodes)
 
     # Store the factors of this power node in the given lists.
-    def __collect_factors_of_power(self, i, multitude : int, nodes : list[Node], nodesToTerms : list[Any], termsToNodes : list[IndexWithMultitude]):
+    def __collect_factors_of_power(self, i : int, multitude : int, nodes : list[Node], nodesToTerms : list[Any], termsToNodes : list[IndexWithMultitude]):
         assert(self.type == NodeType.POWER)
 
         base = self.children[0]
@@ -2852,7 +2852,7 @@ class Node():
         self.__check_store_factor(i, multitude, nodes, nodesToTerms, termsToNodes)
 
     # Store the factors of this node in the given lists.
-    def __check_store_factor(self, i, multitude : int, nodes : list[Node], nodesToTerms : list[Any], termsToNodes : list[IndexWithMultitude]):
+    def __check_store_factor(self, i : int, multitude : int, nodes : list[Node], nodesToTerms : list[Any], termsToNodes : list[IndexWithMultitude]):
         idx = self.__get_index_in_list(nodes)
 
         if idx == None:
