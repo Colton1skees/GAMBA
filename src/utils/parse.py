@@ -8,12 +8,12 @@ from node import Node, NodeType, NodeState
 
 # A class which constructs a tree representation for a given expression.
 class Parser():
-    def __init__(self, expr, modulus, modRed=False):
-        self.__expr = expr
-        self.__modulus = modulus
-        self.__modRed = modRed
-        self.__idx = 0
-        self.__error = ""
+    def __init__(self, expr : str, modulus : int, modRed : bool = False):
+        self.__expr : Node = expr
+        self.__modulus : int = modulus
+        self.__modRed : bool = modRed
+        self.__idx : int = 0
+        self.__error : str = ""
 
     # Parse the whole expression and in this course merge or rearrange constants.
     # Sets self.__error if an error occurs.
@@ -32,12 +32,12 @@ class Parser():
         return root
 
     # Returns a node with given type.
-    def __new_node(self, t):
+    def __new_node(self, t : NodeType) -> Node:
         return Node(t, self.__modulus, self.__modRed)
 
     # Parse the inclusive disjunction starting at current idx. Sets self.__error
     # if an error occurs.
-    def __parse_inclusive_disjunction(self):
+    def __parse_inclusive_disjunction(self) -> Node:
         child = self.__parse_exclusive_disjunction()
         if child == None:
             return None
@@ -60,7 +60,7 @@ class Parser():
 
     # Parse the exclusive disjunction starting at current idx and in this course
     # merge or rearrange constants. Sets self.__error if an error occurs.
-    def __parse_exclusive_disjunction(self):
+    def __parse_exclusive_disjunction(self) -> Node:
         child = self.__parse_conjunction()
         if child == None:
             return None
@@ -83,7 +83,7 @@ class Parser():
 
     # Parse the conjunction starting at current idx and in this course merge or
     # rearrange constants. Sets self.__error if an error occurs.
-    def __parse_conjunction(self):
+    def __parse_conjunction(self) -> Node:
         child = self.__parse_shift()
         if child == None:
             return None
@@ -104,7 +104,7 @@ class Parser():
 
         return node
 
-    def __parse_shift(self):
+    def __parse_shift(self) -> Node:
         base = self.__parse_sum()
         if base == None:
             return None
@@ -143,7 +143,7 @@ class Parser():
 
     # Parse the sum starting at current idx and in this course merge or
     # rearrange constants. Sets self.__error if an error occurs.
-    def __parse_sum(self):
+    def __parse_sum(self) -> Node:
         child = self.__parse_product()
         if child == None:
             return None
@@ -170,7 +170,7 @@ class Parser():
 
     # Parse the product starting at current idx and in this course merge or
     # rearrange constants. Sets self.__error if an error occurs.
-    def __parse_product(self):
+    def __parse_product(self) -> Node:
         child = self.__parse_factor()
         if child == None:
             return None
@@ -194,7 +194,7 @@ class Parser():
     # Parse the factor of a (trivial or nontrivial) product starting at current
     # idx and in this course merge or rearrange constants. Sets self.__error if
     # an error occurs.
-    def __parse_factor(self):
+    def __parse_factor(self) -> Node:
         if self.__has_bitwise_negated_expression():
             return self.__parse_bitwise_negated_expression()
 
@@ -205,7 +205,7 @@ class Parser():
 
     # Parse the bitwise negated expression starting at current idx and in this
     # course merge or rearrange constants. Sets self.__error if an error occurs.
-    def __parse_bitwise_negated_expression(self):
+    def __parse_bitwise_negated_expression(self) -> Node:
         # Skip '~'.
         self.__get()
         node = self.__new_node(NodeType.NEGATION)
@@ -220,7 +220,7 @@ class Parser():
     # Parse the arithmetically negated expression starting at current idx and
     # in this course merge or rearrange constants. Sets self.__error if an error
     # occurs.
-    def __parse_negative_expression(self):
+    def __parse_negative_expression(self) -> Node:
         # Skip '-'.
         self.__get()
 
@@ -232,7 +232,7 @@ class Parser():
         return self.__multiply_by_minus_one(node)
 
     # Returns a node which is the negative of the given node.
-    def __multiply_by_minus_one(self, node):
+    def __multiply_by_minus_one(self, node) -> Node:
         if node.type == NodeType.CONSTANT:
             node.constant = -node.constant
             return node
@@ -255,7 +255,7 @@ class Parser():
         return prod
 
     # Parse the power starting at current idx.
-    def __parse_power(self):
+    def __parse_power(self) -> Node:
         base = self.__parse_terminal()
         if base == None:
             return None
@@ -284,7 +284,7 @@ class Parser():
         return node
 
     # Parse the terminal expression starting at current idx.
-    def __parse_terminal(self):
+    def __parse_terminal(self) -> Node:
         if self.__peek() == '(':
             self.__get()
             node = self.__parse_inclusive_disjunction()
@@ -303,7 +303,7 @@ class Parser():
         return self.__parse_constant()
 
     # Parse the variable name starting at current idx.
-    def __parse_variable(self):
+    def __parse_variable(self) -> Node:
         start = self.__idx
         # Skip first character that has already been checked.
         self.__get(False)
@@ -332,7 +332,7 @@ class Parser():
 
     # Parse the constant starting at current idx. Sets self.__error if an error
     # occurs.
-    def __parse_constant(self):
+    def __parse_constant(self) -> Node:
         if self.__has_binary_constant():
             return self.__parse_binary_constant()
 
@@ -343,7 +343,7 @@ class Parser():
 
     # Parse the binary constant starting at current idx. Sets self.__error if an
     # error occurs.
-    def __parse_binary_constant(self):
+    def __parse_binary_constant(self) -> Node:
         # Skip '0' and 'b'.
         self.__get(False)
         self.__get(False)
@@ -365,7 +365,7 @@ class Parser():
 
     # Parse the hex constant starting at current idx. Sets self.__error if an
     # error occurs.
-    def __parse_hex_constant(self):
+    def __parse_hex_constant(self) -> Node:
         # Skip '0' and 'x'.
         self.__get(False)
         self.__get(False)
@@ -387,7 +387,7 @@ class Parser():
 
     # Parse the decimal constant starting at current idx. Sets self.__error if an
     # error occurs.
-    def __parse_decimal_constant(self):
+    def __parse_decimal_constant(self) -> Node:
         if not self.__has_decimal_digit():
             self.__error = "Expecting constant at " + self.__peek() + ", but no digit around."
             return None
@@ -405,12 +405,12 @@ class Parser():
 
     # Returns the constant starting at given index of the expression and in
     # given base representation.
-    def __get_constant(self, start, base):
+    def __get_constant(self, start, base) -> int:
         return int(self.__expr[start:self.__idx].rstrip(), base)
 
     # Returns the character at position idx of expr, increments idx and skips
     # spaces.
-    def __get(self, skipSpace=True):
+    def __get(self, skipSpace=True) -> str:
         c = self.__peek()
         self.__idx += 1
 
@@ -421,83 +421,83 @@ class Parser():
         return c
 
     # Set idx to the position of the next character of expr which is no space.
-    def __skip_space(self):
+    def __skip_space(self) -> None:
         self.__idx += 1
 
     # Returns the character at position idx of expr or '' if the end of expr is
     # reached.
-    def __peek(self):
+    def __peek(self) -> str:
         if self.__idx >= len(self.__expr):
             return ''
         return self.__expr[self.__idx]
 
     # Returns true iff the character at position idx of expr indicates a
     # bitwise negation.
-    def __has_bitwise_negated_expression(self):
+    def __has_bitwise_negated_expression(self) -> bool:
         return self.__peek() == '~'
 
     # Returns true iff the character at position idx of expr is a unary minus.
-    def __has_negative_expression(self):
+    def __has_negative_expression(self) -> bool:
         return self.__peek() == '-'
 
     # Returns true iff the character at position idx is '*', but the succeeding
     # one, if existent, isn't.
-    def __has_multiplicator(self):
+    def __has_multiplicator(self) -> bool:
         return self.__peek() == '*' and self.__peek_next() != '*'
 
     # Returns true iff the character at position idx initiates a power operator
     # '**'.
-    def __has_power(self):
+    def __has_power(self) -> bool:
         return self.__peek() == '*' and self.__peek_next() == '*'
 
     # Returns true iff the character at position idx initiates a left shift
     # operator '<<'.
-    def __has_lshift(self):
+    def __has_lshift(self) -> bool:
         return self.__peek() == '<' and self.__peek_next() == '<'
 
     # Returns true iff the character at position idx of expr and its succeeding
     # character indicate a binary number, i.e., are '0b'.
-    def __has_binary_constant(self):
+    def __has_binary_constant(self) -> bool:
         return self.__peek() == '0' and self.__peek_next() == 'b'
 
     # Returns true iff the character at position idx of expr and its succeeding
     # character indicate a hexadecimal number, i.e., are '0x'.
-    def __has_hex_constant(self):
+    def __has_hex_constant(self) -> bool:
         return self.__peek() == '0' and self.__peek_next() == 'x'
 
     # Returns true iff the character at position idx of expr is a valid digit in
     # hexadecimal representation.
-    def __has_hex_digit(self):
+    def __has_hex_digit(self) -> bool:
         return self.__has_decimal_digit() or re.match(r'[a-fA-F]', self.__peek())
 
     # Returns true iff the character at position idx of expr is a valid digit in
     # decimal representation.
-    def __has_decimal_digit(self):
+    def __has_decimal_digit(self) -> bool:
         return re.match(r'[0-9]', self.__peek())
 
     # Returns true iff the character at position idx of expr indicates a
     # variable name.
-    def __has_variable(self):
+    def __has_variable(self) -> bool:
         return self.__has_letter()
 
     # Returns true iff the character at position idx of expr is a letter.
-    def __has_letter(self):
+    def __has_letter(self) -> bool:
         return re.match(r'[a-zA-Z]', self.__peek())
 
     # Returns true iff the character at position idx of expr is a space.
-    def __has_space(self):
+    def __has_space(self) -> bool:
         return self.__peek() == ' '
 
     # Returns the character at position idx + 1 of expr or '' if the end of
     # expr would be reached.
-    def __peek_next(self):
+    def __peek_next(self) -> str:
         if self.__idx >= len(self.__expr) - 1:
             return ''
         return self.__expr[self.__idx + 1]
 
 
 # Parse the given expression in a modular field with given bit count.
-def parse(expr, bitCount, reduceConstants=True, refine=False, marklinear=False):
+def parse(expr : str, bitCount : int, reduceConstants : bool = True, refine : bool = False, marklinear : bool =False) -> Node:
     parser = Parser(expr, 2**bitCount, reduceConstants)
     root = parser.parse_expression()
 
