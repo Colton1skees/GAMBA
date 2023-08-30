@@ -5,19 +5,18 @@ import sys
 
 from node import Node, NodeType, NodeState
 
-
 # A class which constructs a tree representation for a given expression.
 class Parser():
-    def __init__(self, expr : str, modulus : int, modRed : bool = False):
-        self.__expr : Node = expr
-        self.__modulus : int = modulus
-        self.__modRed : bool = modRed
-        self.__idx : int = 0
-        self.__error : str = ""
+    def __init__(self, expr : str, modulus : int, modRed : bool = False) -> int:
+        self.__expr = expr
+        self.__modulus = modulus
+        self.__modRed = modRed
+        self.__idx = 0
+        self.__error = ""
 
     # Parse the whole expression and in this course merge or rearrange constants.
     # Sets self.__error if an error occurs.
-    def parse_expression(self):
+    def parse_expression(self) -> Node:
         if self.__has_space():
             self.__skip_space()
         root = self.__parse_inclusive_disjunction()
@@ -509,72 +508,3 @@ def parse(expr : str, bitCount : int, reduceConstants : bool = True, refine : bo
         else:
             root.mark_linear()
     return root
-
-
-# Print options.
-def print_usage():
-    print("Usage: python3 parse.py")
-    print("Command line input not preceded by option indicators below are considered expressions to be parsed.")
-    print("Command line options:")
-    print("    -h:    print usage")
-    print("    -b:    specify the bit number of variables (default is 64)")
-    print("    -r:    refine the expressions")
-    print("    -l:    mark linear subexpressions")
-
-
-if __name__ == "__main__":
-    argc = len(sys.argv)
-    bitCount = 64
-    refine = False
-    marklinear = False
-    expressions = []
-
-    i = 0
-    while i < argc - 1:
-        i = i + 1
-
-        if sys.argv[i] == "-h":
-            print_usage()
-            sys.exit(0)
-
-        elif sys.argv[i] == "-b":
-            i = i + 1
-            if i == argc:
-                print_usage()
-                sys.exit("Error: No bit count given!")
-
-            bitCount = int(sys.argv[i])
-
-        elif sys.argv[i] == "-r":
-            refine = True
-
-        elif sys.argv[i] == "-l":
-            marklinear = True
-
-        else:
-            expressions.append(sys.argv[i])
-
-    if marklinear:
-        refine = True
-
-    if len(expressions) == 0:
-        sys.exit("No expressions to parse given!")
-
-    for expr in expressions:
-        print("*** Expression " + expr)
-        root = parse(expr, refine, bitCount, marklinear)
-        if root == None:
-            print("*** ... invalid")
-        else:
-            print("*** ... parsed to " + root.to_string())
-            if marklinear:
-                if root.state == NodeState.BITWISE:
-                    print("*** +++ expression is a bitwise expression and hence a linear MBA")
-                elif root.state == NodeState.LINEAR:
-                    print("*** +++ expression is a linear MBA")
-                elif root.state == NodeState.NONLINEAR:
-                    print("*** --- expression is no linear MBA")
-                else:
-                    print("*** --- could not determine linearity")
-
-    sys.exit(0)
