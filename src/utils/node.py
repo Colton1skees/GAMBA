@@ -2587,7 +2587,7 @@ class Node():
     def __get_product_of_power_and_other(self, other : Node) -> Node:
         assert(self.type == NodeType.POWER)
 
-        types : list[Node] = [NodeType.CONSTANT, NodeType.PRODUCT, NodeType.POWER]
+        types : list[NodeType] = [NodeType.CONSTANT, NodeType.PRODUCT, NodeType.POWER]
         assert(other.type not in types)
 
         # Check whether the power's base coincides with the given node.
@@ -4544,7 +4544,7 @@ class Node():
     # between the sum of candidate terms and the sum of the bitwise
     # expression's operands is given, together with a list of the terms'
     # indices.
-    def __check_transform_bitwise_for_diff(self, toXor : bool, idx : int, bitw : Node, factor : int, diff : Node, indices : list[int]) -> Optional[int]:
+    def __check_transform_bitwise_for_diff(self, toXor : bool, idx : int, bitw : Node, factor : i64, diff : Node, indices : list[int]) -> Optional[int]:
         newIdx = self.__check_transform_bitwise_for_diff_full(toXor, idx, bitw, factor, diff, indices)
         if newIdx != None: return newIdx
 
@@ -4565,7 +4565,7 @@ class Node():
     # exclusive disjunction (if toXor is true) or its inverse operation
     # (otherwise) if this would cancel out sum terms. Transform the expression
     # if the given difference is a constant.
-    def __check_transform_bitwise_for_diff_full(self, toXor : bool, idx : int, bitw : Node, factor : int, diff : Node, indices : list[int]) -> Optional[int]:
+    def __check_transform_bitwise_for_diff_full(self, toXor : bool, idx : int, bitw : Node, factor : i64, diff : Node, indices : list[int]) -> Optional[int]:
         if diff.type != NodeType.CONSTANT: return None
 
         # We found a match. Transform the bitwise expression.
@@ -4600,7 +4600,7 @@ class Node():
     # exclusive disjunction (if toXor is true) or its inverse operation
     # (otherwise) if this would cancel out sum terms. Transform the expression
     # if the given difference can be merged into one of the terms.
-    def __check_transform_bitwise_for_diff_merge(self, toXor : bool, idx : int, bitw : Node, factor : int, diff : Node, indices : list[int]) -> Optional[int]:
+    def __check_transform_bitwise_for_diff_merge(self, toXor : bool, idx : int, bitw : Node, factor : i64, diff : Node, indices : list[int]) -> Optional[int]:
         constN = diff.__get_opt_const_factor()
         for i in indices:
             child = self.children[i]
@@ -4760,7 +4760,7 @@ class Node():
     # If it is True, apply, e.g., the following rules:
     #   "2*(x&y) - x" -> "y - (x^y)"
     #   "2*(x|y) - x" -> "y + (x^y)"
-    def __check_transform_bitwise_in_sum_replace_impl(self, toXor : bool, idx : int, bitw : Node, cIdx : int, factor : int) -> Optional[int]:
+    def __check_transform_bitwise_in_sum_replace_impl(self, toXor : bool, idx : int, bitw : Node, cIdx : int, factor : i64) -> Optional[int]:
         assert(self.type == NodeType.SUM)
         assert(idx < len(self.children))
 
@@ -4815,7 +4815,7 @@ class Node():
     # one, both corresponding to operands of the bitwise. Here the difference
     # between the sum of candidate terms and the bitwise expression's operand
     # is given, together with a list of the terms' indices.
-    def __check_transform_bitwise_replace_for_diff(self, toXor : bool, idx : int, bitw : Node, factor : int, diff : Node, cIdx : int, indices : list[int]) -> Optional[int]:
+    def __check_transform_bitwise_replace_for_diff(self, toXor : bool, idx : int, bitw : Node, factor : i64, diff : Node, cIdx : int, indices : list[int]) -> Optional[int]:
         return self.__check_transform_bitwise_replace_for_diff_full(toXor, idx, bitw, factor, diff, cIdx, indices)
 
     # Try to transform the given bitwise expression, which is either a
@@ -4825,7 +4825,7 @@ class Node():
     # (otherwise) if this would replace a more complex term by a more simple
     # one, both corresponding to operands of the bitwise. Transform the
     # expression if the given difference is a constant.
-    def __check_transform_bitwise_replace_for_diff_full(self, toXor : bool, idx : int, bitw : Node, factor : int, diff : Node, cIdx : int, indices : list[int]) -> Optional[int]:
+    def __check_transform_bitwise_replace_for_diff_full(self, toXor : bool, idx : int, bitw : Node, factor : i64, diff : Node, cIdx : int, indices : list[int]) -> Optional[int]:
         if diff.type != NodeType.CONSTANT: return None
 
         # We found a match. First append the less complex operand as a term.
@@ -5001,8 +5001,8 @@ class Node():
         l = self.__collect_indices_of_bitw_with_constants_in_sum(NodeType.EXCL_DISJUNCTION)
         if len(l) == 0: return False
 
-        toRemove : list[Node] = []
-        _const = 0
+        toRemove : list[int] = []
+        _const : i64 = 0
 
         for pair in l:
             factor = pair[0]
@@ -5205,8 +5205,8 @@ class Node():
         l = self.__collect_all_indices_of_bitw_with_constants()
         if len(l) == 0: return False
 
-        toRemove : list[Node] = []
-        _const = 0
+        toRemove : list[int] = []
+        _const : i64 = 0
         changed = False
 
         for sublist in l:
@@ -5341,7 +5341,7 @@ class Node():
     #   -2*(a&x) + (b^x) -> 2*(~(a+b)&x) - x + b
     #    2*(a|x) + (b^x) -> 2*(~(a+b)&x) + x + 2*a + b
     #   -(a&x) + (b|x) -> (~(a+b)&x) + b
-    def __merge_bitwise_terms(self, firstIdx : int, secIdx : int, first : Node, second : Node, factor : int, firstConst : i64, secConst : i64) -> tuple[int, bool, int]:
+    def __merge_bitwise_terms(self, firstIdx : int, secIdx : int, first : Node, second : Node, factor : i64, firstConst : i64, secConst : i64) -> tuple[i64, bool, i64]:
         bitwFactor, add, opfac = self.__merge_bitwise_terms_and_get_opfactor(firstIdx, secIdx, first, second,
                                                                              factor, firstConst, secConst)
         if opfac == 0: return bitwFactor, True, add
@@ -5358,7 +5358,7 @@ class Node():
     # second bitwise yet, even if it would be to be replaced by the operand.
     # Returns the new factor of the merged term,  an optional constant to be
     # added later on and a factor for the operand.
-    def __merge_bitwise_terms_and_get_opfactor(self, firstIdx : int, secIdx : int, first : Node, second : Node, factor : int, firstConst : int, secConst : int) -> tuple[int, int, int]:
+    def __merge_bitwise_terms_and_get_opfactor(self, firstIdx : int, secIdx : int, first : Node, second : Node, factor : i64, firstConst : i64, secConst : i64) -> tuple[i64, i64, i64]:
         constSum = firstConst + secConst
         constNeg = -constSum - 1
         bitwFactor = self.__get_bitwise_factor_for_merging_bitwise(factor, first.type, second.type)
@@ -5392,7 +5392,7 @@ class Node():
 
     # For merging bitwise operations with given types and given factor, returns
     # the new constant operand of the bitwise.
-    def __get_const_operand_for_merging_bitwise(self, constSum : int, type1 : NodeType, type2 : NodeType) -> i64:
+    def __get_const_operand_for_merging_bitwise(self, constSum : i64, type1 : NodeType, type2 : NodeType) -> i64:
         if type1 == type2 and type1 != NodeType.EXCL_DISJUNCTION: return constSum
         # Return ~(const1 + const2).
         return -constSum - 1
@@ -5477,7 +5477,7 @@ class Node():
     # constant to be added if they have been merged, or None otherwise.
     # Moreover a list of indices to be removed later on is given, and
     # optionally extended.
-    def __try_merge_bitwise_with_constants_with_2_others(self, sublist : list[list[int]], i : int, toRemove : list[int]) -> Optional[int]:
+    def __try_merge_bitwise_with_constants_with_2_others(self, sublist : list[list[int]], i : int, toRemove : list[int]) -> Optional[i64]:
         for j in range(1, i):
             for k in range(0, j):
                 add = self.__try_merge_triple_bitwise_with_constants(sublist, i, j, k, toRemove)
@@ -5489,7 +5489,7 @@ class Node():
     # corresponding to the given list and the given indices. Returns a constant
     # to be added if they have been merged, or None otherwise. Moreover a list
     # of indices to be removed later on is given, and optionally extended.
-    def __try_merge_triple_bitwise_with_constants(self, sublist : list[list[int]], i : int, j : int, k : int, toRemove : list[int]) -> Optional[int]:
+    def __try_merge_triple_bitwise_with_constants(self, sublist : list[list[int]], i : int, j : int, k : int, toRemove : list[int]) -> Optional[i64]:
         perms : list[list[int]] = [[i, j, k], [j, i, k], [k, i, j]]
         for perm in perms:
             mainFactor, mainIdx = sublist[perm[0]]
@@ -5544,7 +5544,7 @@ class Node():
     # Returns a pair of factors for merging a bitwise operations with a
     # constant into the other two such. Returns None, None if this is not
     # possible.
-    def __get_factors_for_merging_triple(self, type1 : NodeType, type2 : NodeType, type0 : NodeType, fac1 : i64, fac2 : i64, fac0 : i64, const1: i64, const2 : i64, const0 : i64) -> tuple[Optional[int], Optional[int]]:
+    def __get_factors_for_merging_triple(self, type1 : NodeType, type2 : NodeType, type0 : NodeType, fac1 : i64, fac2 : i64, fac0 : i64, const1: i64, const2 : i64, const0 : i64) -> tuple[Optional[i64], Optional[i64]]:
         # Check whether the constants's 1 positions are disjunct.
         if (const1 & const0) != 0: return None, None
         if (const2 & const0) != 0: return None, None
@@ -5715,7 +5715,7 @@ class Node():
     # no constant operand, returns the factor. Otherwise returns None.
     # Additionally returns the bitwise operation or None, resp. If expType is
     # None, considers all binary bitwise operations.
-    def __get_factor_of_bitw_without_constant(self, expType : Optional[NodeType] = None) -> tuple[Optional[int], Node]:
+    def __get_factor_of_bitw_without_constant(self, expType : Optional[NodeType] = None) -> tuple[Optional[i64], Node]:
         factor : Optional[i64] = None
         node : Node = None
 
@@ -5770,9 +5770,9 @@ class Node():
         assert(self.type == other.type or (len(self.children) == 2))
         assert(len(self.children) == len(other.children))
 
-        idx1 = None
+        idx1 : Optional[int] = None
 
-        oIndices = list(range(len(other.children)))
+        oIndices : list[int] = list(range(len(other.children)))
         for i in range(len(self.children)):
             child = self.children[i]
             found = False
