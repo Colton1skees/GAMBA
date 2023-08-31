@@ -404,7 +404,7 @@ class Parser():
 
     # Returns the constant starting at given index of the expression and in
     # given base representation.
-    def __get_constant(self, start, base) -> int:
+    def __get_constant(self, start : int, base : int) -> int:
         return int(self.__expr[start:self.__idx].rstrip(), base)
 
     # Returns the character at position idx of expr, increments idx and skips
@@ -496,7 +496,7 @@ class Parser():
 
 
 # Parse the given expression in a modular field with given bit count.
-def parse(expr : str, bitCount : int, reduceConstants : bool = True, refine : bool = False, marklinear : bool =False) -> Node:
+def parse(expr : str, bitCount : int, reduceConstants : bool = True, refine : bool = False, marklinear : bool = False) -> Node:
     parser = Parser(expr, 2**bitCount, reduceConstants)
     root = parser.parse_expression()
 

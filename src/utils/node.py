@@ -731,7 +731,7 @@ class Node():
         return n
 
     # Copy this node's content to a new node.
-    def __get_shallow_copy(self) -> None:
+    def __get_shallow_copy(self) -> Node:
         n = self.__new_node(self.type)
         n.state = self.state
         n.children = []
@@ -2800,7 +2800,7 @@ class Node():
         return True
 
     # Store the factors of this node in the given lists.
-    def __collect_all_factors_of_sum(self) -> tuple[list[Node], list[Any], list[IndexWithMultitude]]:
+    def __collect_all_factors_of_sum(self) -> tuple[list[Node], list[Any], list[set[IndexWithMultitude]]]:
         nodes = []
         nodesToTerms = []
         termsToNodes = []
@@ -2814,7 +2814,7 @@ class Node():
         return nodes, nodesToTerms, termsToNodes
 
     # Store the factors of this node in the given lists.
-    def __collect_factors(self, i : int, multitude : int, nodes : list[Node], nodesToTerms : list[Any], termsToNodes : list[IndexWithMultitude]):
+    def __collect_factors(self, i : int, multitude : int, nodes : list[Node], nodesToTerms : list[Any], termsToNodes : list[set[IndexWithMultitude]]) -> None:
         if self.type == NodeType.PRODUCT:
             for factor in self.children:
                 factor.__collect_factors(i, multitude, nodes, nodesToTerms, termsToNodes)
@@ -2826,7 +2826,7 @@ class Node():
             self.__check_store_factor(i, multitude, nodes, nodesToTerms, termsToNodes)
 
     # Store the factors of this power node in the given lists.
-    def __collect_factors_of_power(self, i : int, multitude : int, nodes : list[Node], nodesToTerms : list[Any], termsToNodes : list[IndexWithMultitude]):
+    def __collect_factors_of_power(self, i : int, multitude : int, nodes : list[Node], nodesToTerms : list[Any], termsToNodes : list[set[IndexWithMultitude]]) -> None:
         assert(self.type == NodeType.POWER)
 
         base = self.children[0]
@@ -2852,7 +2852,7 @@ class Node():
         self.__check_store_factor(i, multitude, nodes, nodesToTerms, termsToNodes)
 
     # Store the factors of this node in the given lists.
-    def __check_store_factor(self, i : int, multitude : int, nodes : list[Node], nodesToTerms : list[Any], termsToNodes : list[IndexWithMultitude]):
+    def __check_store_factor(self, i : int, multitude : int, nodes : list[Node], nodesToTerms : list[Any], termsToNodes : list[set[IndexWithMultitude]]) -> None:
         idx = self.__get_index_in_list(nodes)
 
         if idx == None:
@@ -2893,7 +2893,7 @@ class Node():
         return not self.__is_bitwise_binop()
 
     # Create a node from the given batch.
-    def __node_from_batch(self, batch : Batch, nodes : list[Node], termsToNodes : list[IndexWithMultitude]) -> Node:
+    def __node_from_batch(self, batch : Batch, nodes : list[Node], termsToNodes : list[set[IndexWithMultitude]]) -> Node:
         node = self.__new_node(NodeType.SUM)
 
         for c in batch.children: node.children.append(self.__node_from_batch(c, nodes, termsToNodes))
@@ -2935,7 +2935,7 @@ class Node():
 
     # Reduces the given set of node indices, together with their multitudes, by
     # that contained in any of both other given lists.
-    def __reduce_node_set(self, indicesWithMultitudes, l1, l2) -> None:
+    def __reduce_node_set(self, indicesWithMultitudes : set[IndexWithMultitude], l1 : int, l2 : int) -> None:
         for p in l1 + l2:
             m = [q for q in indicesWithMultitudes if q.idx == p.idx]
             assert(len(m) == 1)
@@ -3340,7 +3340,7 @@ class Node():
         return neg.equals(self.children[0])
 
     # Returns True iff this node is double the given node.
-    def __is_double(self, node) -> bool:
+    def __is_double(self, node : Node) -> bool:
         cpy = node.get_copy()
         cpy.__multiply(2)
         return self.equals(cpy)
@@ -3701,7 +3701,7 @@ class Node():
 
     # Returns a node equal to the given one after division by the given
     # divisor. Returns None if division is not possible without remainder.
-    def __divided(self, divisor) -> Node:
+    def __divided(self, divisor : int) -> Node:
         if self.type == NodeType.CONSTANT:
             if self.constant % divisor == 0: return self.__new_constant_node(self.constant // divisor)
 
@@ -4134,7 +4134,7 @@ class Node():
     # If this node is a conjunction, check for the pattern x&-(-y&(x|y)).
     # If it is a disjunction, check for the pattern x|-(-y|(x&y)).
     # Whenever found, remove x+(~x&y) since it has no effect.
-    def __check_nested_bitwise_rule(self, t) -> bool:
+    def __check_nested_bitwise_rule(self, t : NodeType) -> bool:
         if self.type != t: return False
         changed = False
 
@@ -4958,7 +4958,7 @@ class Node():
 
     # Returns a list of all terms in this sum node which are constant multiples
     # of bitwise operations of given type with a constant operator.
-    def __collect_indices_of_bitw_with_constants_in_sum(self, expType : NodeType) -> list:
+    def __collect_indices_of_bitw_with_constants_in_sum(self, expType : NodeType) -> list[tuple[int, list[int]]]:
         assert(self.type == NodeType.SUM)
 
         # A list containing tuples of factors and lists of indices.
@@ -5162,7 +5162,7 @@ class Node():
 
     # Returns a list of all terms in this sum node which are constant multiples
     # of bitwise operations with a constant operand.
-    def __collect_all_indices_of_bitw_with_constants(self):
+    def __collect_all_indices_of_bitw_with_constants(self) -> list[list[int]]:
         assert(self.type == NodeType.SUM)
 
         # A list containing tuples of factors and lists of indices.
@@ -5378,7 +5378,7 @@ class Node():
     # constant to be added if they have been merged, or None otherwise.
     # Moreover a list of indices to be removed later on is given, and
     # optionally extended.
-    def __try_merge_bitwise_with_constants_with_2_others(self, sublist, i, toRemove) -> Optional[int]:
+    def __try_merge_bitwise_with_constants_with_2_others(self, sublist : list[list[int]], i : int, toRemove : list[int]) -> Optional[int]:
         for j in range(1, i):
             for k in range(0, j):
                 add = self.__try_merge_triple_bitwise_with_constants(sublist, i, j, k, toRemove)
@@ -5390,7 +5390,7 @@ class Node():
     # corresponding to the given list and the given indices. Returns a constant
     # to be added if they have been merged, or None otherwise. Moreover a list
     # of indices to be removed later on is given, and optionally extended.
-    def __try_merge_triple_bitwise_with_constants(self, sublist, i, j, k, toRemove) -> Optional[int]:
+    def __try_merge_triple_bitwise_with_constants(self, sublist : list[list[int]], i : int, j : int, k : int, toRemove : list[int]) -> Optional[int]:
         for perm in [[i, j, k], [j, i, k], [k, i, j]]:
             mainFactor, mainIdx = sublist[perm[0]]
             main = self.children[mainIdx]
@@ -5466,7 +5466,7 @@ class Node():
 
     # If the given factors and node types allow merging the nodes, returns a
     # factor for merging. Otherwise returns None, None.
-    def __get_possible_factor_for_merging_bitwise(self, fac1 : int, type1 : NodeType, type0 : NodeType):
+    def __get_possible_factor_for_merging_bitwise(self, fac1 : int, type1 : NodeType, type0 : NodeType) -> int:
         if type1 == NodeType.EXCL_DISJUNCTION:
             if type0 == NodeType.CONJUNCTION: return -2*fac1
             if type0 == NodeType.INCL_DISJUNCTION: return 2*fac1
@@ -5585,7 +5585,7 @@ class Node():
     # of bitwise operations of given type with no constant operator. The nodes
     # are partitioned wrt. their factors and their numbers of operands in the
     # bitwise expressions.
-    def __collect_indices_of_bitw_without_constants_in_sum(self, expType : NodeType):
+    def __collect_indices_of_bitw_without_constants_in_sum(self, expType : NodeType) -> list[Any]:
         assert(self.type == NodeType.SUM)
 
         # A list containing tuples of factors and lists of indices.
@@ -5792,7 +5792,7 @@ class Node():
 
     # For merging bitwise operations with given types, returns True iff the
     # inverse operand has to be inverted in the second term.
-    def __must_invert_at_merging_inverse_bitwise(self, type1, type2):
+    def __must_invert_at_merging_inverse_bitwise(self, type1 : NodeType, type2 : NodeType) -> bool:
         assert(type1 != type2)
 
         if type1 == NodeType.EXCL_DISJUNCTION: return True
@@ -5881,7 +5881,7 @@ class Node():
 
     # Returns a list of all terms in this sum node which are constant multiples
     # of bitwise operations with no constant operator.
-    def __collect_all_indices_of_bitw_without_constants(self):
+    def __collect_all_indices_of_bitw_without_constants(self) -> list[Any]:
         assert(self.type == NodeType.SUM)
 
         # A list containing tuples of factors and indices.
@@ -6352,7 +6352,7 @@ class Node():
 
 
     # Returns the number of nodes with a type included in the given list.
-    def count_nodes(self, typeList=list[NodeType]) -> int:
+    def count_nodes(self, typeList : list[NodeType] = None) -> int:
         cnt = 0
         for child in self.children: cnt += child.count_nodes(typeList)
 
