@@ -680,12 +680,12 @@ class Node():
     # is, get rid of exponents which are zero or one.
     def __inspect_constants_power(self) -> None:
         assert(len(self.children) == 2)
-        base = self.children[0]
+        _base = self.children[0]
         exp = self.children[1]
 
-        if base.type == NodeType.CONSTANT and exp.type == NodeType.CONSTANT:
-            base.__set_and_reduce_constant(self.__power(base.constant, exp.constant))
-            self.copy(base)
+        if _base.type == NodeType.CONSTANT and exp.type == NodeType.CONSTANT:
+            _base.__set_and_reduce_constant(self.__power(_base.constant, exp.constant))
+            self.copy(_base)
             return
 
         if exp.type == NodeType.CONSTANT:
@@ -693,7 +693,7 @@ class Node():
                 self.type = NodeType.CONSTANT
                 self.constant = 1
                 self.children = []
-            elif exp.constant == 1: self.copy(base)
+            elif exp.constant == 1: self.copy(_base)
 
     # Modulo-reduce the constant by stored modulus.
     def __inspect_constants_constant(self) -> None:
@@ -1770,13 +1770,13 @@ class Node():
         exp = self.children[1]
         if exp.type != NodeType.CONSTANT: return False
 
-        base = self.children[0]
-        if base.type != NodeType.PRODUCT: return False
-        if base.children[0].type != NodeType.CONSTANT: return False
+        _base = self.children[0]
+        if _base.type != NodeType.PRODUCT: return False
+        if _base.children[0].type != NodeType.CONSTANT: return False
 
-        _const = self.__power(base.children[0].constant, exp.constant)
-        del base.children[0]
-        if len(base.children) == 1: base.copy(base.children[0])
+        _const = self.__power(_base.children[0].constant, exp.constant)
+        del _base.children[0]
+        if len(_base.children) == 1: _base.copy(_base.children[0])
 
         if _const == 1: return True
 
@@ -1828,10 +1828,10 @@ class Node():
                 # since we may have powers of powers.
 
                 if child.type == NodeType.POWER:
-                    base = child.children[0]
+                    _base = child.children[0]
                     exp = child.children[1]
 
-                    if base.equals(child2):
+                    if _base.equals(child2):
                         exp.__add_constant(1)
                         self.children[j] = self.children[i]
                         del self.children[i]
@@ -2000,6 +2000,7 @@ class Node():
 
         first = self.children[0]
         exp : Node = None
+        _base : Node = None
         if first.type == NodeType.PRODUCT:
             for child in first.children:
                 if child.type == NodeType.CONSTANT: continue
@@ -2013,9 +2014,9 @@ class Node():
                     # simplified to 0**0.
                     exp = child.children[1]
                     if exp.type == NodeType.CONSTANT and not exp.__is_constant(0):
-                        base = child.children[0]
-                        if self.__has_factor_in_remaining_children(base):
-                            return base.get_copy()
+                        _base = child.children[0]
+                        if self.__has_factor_in_remaining_children(_base):
+                            return _base.get_copy()
             return None
 
         if first.type == NodeType.POWER:
@@ -2023,9 +2024,9 @@ class Node():
             # (nonzero) integer.
             exp = first.children[1]
             if exp.type == NodeType.CONSTANT and not exp.__is_constant(0):
-                base = first.children[0]
-                if base.type != NodeType.CONSTANT and self.__has_factor_in_remaining_children(base):
-                    return base.get_copy()
+                _base = first.children[0]
+                if _base.type != NodeType.CONSTANT and self.__has_factor_in_remaining_children(_base):
+                    return _base.get_copy()
             return None
 
         if first.type != NodeType.CONSTANT and self.__has_factor_in_remaining_children(first):
@@ -2456,12 +2457,12 @@ class Node():
         assert(self.type == NodeType.PRODUCT)
         assert(other.type == NodeType.POWER)
 
-        base = other.children[0]
+        _base = other.children[0]
 
         for i in range(len(self.children)):
             child = self.children[i]
 
-            if child.equals(base):
+            if child.equals(_base):
                 self.children[i] = other.get_copy()
                 # Increment exponent by 1.
                 self.children[i].children[1].__add_constant(1)
@@ -2470,7 +2471,7 @@ class Node():
                 if self.children[i].children[1].__is_constant(0): del self.children[i]
                 return
 
-            if child.type == NodeType.POWER and child.children[0].equals(base):
+            if child.type == NodeType.POWER and child.children[0].equals(_base):
                 # Sum up exponents.
                 child.children[1].__add(other.children[1])
 
@@ -2785,12 +2786,12 @@ class Node():
     # Expand this node, which is assumed to be a power of a sum with constant
     # exponent, by multiplying its base the corresponding number of times.
     def __expand_power(self, exp : int) -> Node:
-        base = self.children[0]
-        node = base.get_copy()
+        _base = self.children[0]
+        node = _base.get_copy()
         assert(node.type == NodeType.SUM)
 
         for i in range(1, exp):
-            node.__multiply_sum_with_sum(base, True)
+            node.__multiply_sum_with_sum(_base, True)
 
             if node.__is_constant(0): break
 
@@ -2863,19 +2864,19 @@ class Node():
     def __collect_factors_of_power(self, i : int, multitude : int, nodes : list[Node], nodesToTerms : list[Any], termsToNodes : list[set[IndexWithMultitude]]) -> None:
         assert(self.type == NodeType.POWER)
 
-        base = self.children[0]
+        _base = self.children[0]
         exp = self.children[1]
 
         # We only extract powers with constant exponents.
         if exp.type == NodeType.CONSTANT:
-            base.__collect_factors(i, exp.constant * multitude % self.__modulus, nodes, nodesToTerms, termsToNodes)
+            _base.__collect_factors(i, exp.constant * multitude % self.__modulus, nodes, nodesToTerms, termsToNodes)
             return
 
         # Try to split a constant exponent from the sum.
         if exp.type == NodeType.SUM:
             first = exp.children[0]
             if first.type == NodeType.CONSTANT:
-                base.__collect_factors(i, first.constant * multitude % self.__modulus, nodes, nodesToTerms, termsToNodes)
+                _base.__collect_factors(i, first.constant * multitude % self.__modulus, nodes, nodesToTerms, termsToNodes)
 
                 node = self.get_copy()
                 del node.children[1].children[0]
@@ -2990,11 +2991,11 @@ class Node():
 
         if self.type != NodeType.POWER: return 1
 
-        base = self.children[0]
-        if base.type != NodeType.PRODUCT: return 1
-        if base.children[0].type != NodeType.CONSTANT: return 1
+        _base = self.children[0]
+        if _base.type != NodeType.PRODUCT: return 1
+        if _base.children[0].type != NodeType.CONSTANT: return 1
 
-        _const = base.children[0].constant
+        _const = _base.children[0].constant
         exp = self.children[1]
         if exp.type == NodeType.CONSTANT: return self.__power(_const, exp.constant)
 
