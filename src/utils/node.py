@@ -243,7 +243,7 @@ class Node():
 
     # Collect all variable names occuring in the expression corresponding to
     # this node.
-    def collect_variables(self, variables : str[Node]) -> None:
+    def collect_variables(self, variables : list[str]) -> None:
         if self.type == NodeType.VARIABLE:
             # The variable is not ready known yet.
             if not self.vname in variables: variables.append(self.vname)
@@ -1774,19 +1774,19 @@ class Node():
         if base.type != NodeType.PRODUCT: return False
         if base.children[0].type != NodeType.CONSTANT: return False
 
-        const = self.__power(base.children[0].constant, exp.constant)
+        _const = self.__power(base.children[0].constant, exp.constant)
         del base.children[0]
         if len(base.children) == 1: base.copy(base.children[0])
 
-        if const == 1: return True
+        if _const == 1: return True
 
         if parent != None and parent.type == NodeType.PRODUCT:
             if parent.children[0].type == NodeType.PRODUCT:
-                parent.children[0].__set_and_reduce_constant(parent.children[0].constant * const)
-            else: parent.children.insert(0, self.__new_constant_node(const))
+                parent.children[0].__set_and_reduce_constant(parent.children[0].constant * _const)
+            else: parent.children.insert(0, self.__new_constant_node(_const))
         else:
             prod = self.__new_node(NodeType.PRODUCT)
-            prod.children.append(self.__new_constant_node(const))
+            prod.children.append(self.__new_constant_node(_const))
             prod.children.append(self.__get_shallow_copy())
             self.copy(prod)
 
@@ -2164,7 +2164,7 @@ class Node():
         if self.type != NodeType.SUM: return False
 
         changed = False
-        const = 0
+        _const = 0
 
         i = len(self.children)
         while i > 1:
@@ -2179,7 +2179,7 @@ class Node():
                     del self.children[j]
                     # Decrement i since child j < i has been removed.
                     i -= 1
-                    const -= 1
+                    _const -= 1
                     changed = True
                     break
 
@@ -2200,8 +2200,8 @@ class Node():
 
         # Adapt the constant.
         if len(self.children) > 0 and self.children[0].type == NodeType.CONSTANT:
-            self.children[0].__set_and_reduce_constant(self.children[0].constant + const)
-        else: self.children.insert(0, self.__new_constant_node(const))
+            self.children[0].__set_and_reduce_constant(self.children[0].constant + _const)
+        else: self.children.insert(0, self.__new_constant_node(_const))
         if len(self.children) > 1 and self.children[0].__is_constant(0): del self.children[0]
 
         if len(self.children) == 1: self.copy(self.children[0])
@@ -2929,6 +2929,7 @@ class Node():
     # Create a node from the given batch.
     def __node_from_batch(self, batch : Batch, nodes : list[Node], termsToNodes : list[set[IndexWithMultitude]]) -> Node:
         node = self.__new_node(NodeType.SUM)
+        prod : Node = None
 
         for c in batch.children: node.children.append(self.__node_from_batch(c, nodes, termsToNodes))
 
@@ -2993,14 +2994,14 @@ class Node():
         if base.type != NodeType.PRODUCT: return 1
         if base.children[0].type != NodeType.CONSTANT: return 1
 
-        const = base.children[0].constant
+        _const = base.children[0].constant
         exp = self.children[1]
-        if exp.type == NodeType.CONSTANT: return self.__power(const, exp.constant)
+        if exp.type == NodeType.CONSTANT: return self.__power(_const, exp.constant)
 
         if exp.type != NodeType.SUM: return 1
         if exp.children[0].type != NodeType.CONSTANT: return 1
 
-        return self.__power(const, exp.children[0].constant)
+        return self.__power(_const, exp.children[0].constant)
 
     # Returns a node which coincides width the given list's element with given
     # index and multitude.
@@ -4953,7 +4954,7 @@ class Node():
         if len(l) == 0: return False
 
         toRemove = []
-        const = 0
+        _const = 0
 
         for pair in l:
             factor = pair[0]
@@ -4983,7 +4984,7 @@ class Node():
 
                     _, remove, add = self.__merge_bitwise_terms(firstIdx, secIdx, first, second, factor,
                                                 first.children[0].constant, second.children[0].constant)
-                    const += add
+                    _const += add
 
                     # Make sure that this node is not used any more since it is
                     # now a conjunction.
@@ -5000,8 +5001,8 @@ class Node():
 
         # Adapt the constant.
         if self.children[0].type == NodeType.CONSTANT:
-            self.children[0].__set_and_reduce_constant(self.children[0].constant + const)
-        else: self.children.insert(0, self.__new_constant_node(const))
+            self.children[0].__set_and_reduce_constant(self.children[0].constant + _const)
+        else: self.children.insert(0, self.__new_constant_node(_const))
         if len(self.children) > 1 and self.children[0].__is_constant(0): del self.children[0]
 
         return True
@@ -5157,7 +5158,7 @@ class Node():
         if len(l) == 0: return False
 
         toRemove = []
-        const = 0
+        _const = 0
         changed = False
 
         for sublist in l:
@@ -5185,7 +5186,7 @@ class Node():
 
                     bitwFactor, remove, add = self.__merge_bitwise_terms(firstIdx, secIdx, first, second,
                                                                          factor, firstConst, secConst)
-                    const += add
+                    _const += add
 
                     if remove: toRemove.append(secIdx)
                     # Finally adapt the factor in the list.
@@ -5203,8 +5204,8 @@ class Node():
 
         # Adapt the constant.
         if self.children[0].type == NodeType.CONSTANT:
-            self.children[0].__set_and_reduce_constant(self.children[0].constant + const)
-        else: self.children.insert(0, self.__new_constant_node(const))
+            self.children[0].__set_and_reduce_constant(self.children[0].constant + _const)
+        else: self.children.insert(0, self.__new_constant_node(_const))
         if len(self.children) > 1 and self.children[0].__is_constant(0): del self.children[0]
 
         if len(self.children) == 1: self.copy(self.children[0])
@@ -5397,7 +5398,7 @@ class Node():
         if len(l) == 0: return False
 
         toRemove = []
-        const = 0
+        _const = 0
         changed = False
 
         for sublist in l:
@@ -5405,7 +5406,7 @@ class Node():
                 add = self.__try_merge_bitwise_with_constants_with_2_others(sublist, i, toRemove)
                 if add != None:
                     changed = True
-                    const += add
+                    _const += add
 
         # Nothing has changed.
         if not changed: return False
@@ -5416,8 +5417,8 @@ class Node():
 
         # Adapt the constant.
         if self.children[0].type == NodeType.CONSTANT:
-            self.children[0].__set_and_reduce_constant(self.children[0].constant + const)
-        else: self.children.insert(0, self.__new_constant_node(const))
+            self.children[0].__set_and_reduce_constant(self.children[0].constant + _const)
+        else: self.children.insert(0, self.__new_constant_node(_const))
         if len(self.children) > 1 and self.children[0].__is_constant(0): del self.children[0]
 
         if len(self.children) == 1: self.copy(self.children[0])
@@ -5568,7 +5569,7 @@ class Node():
 
         toRemove = []
         changed = False
-        const = 0
+        _const = 0
 
         for pair in l:
             factor = pair[0]
@@ -5599,7 +5600,7 @@ class Node():
                     if not first.children[indices[0]].equals_negated(second.children[indices[1]]): continue
 
                     removeFirst, removeSec, add = self.__merge_inverse_bitwise_terms(firstIdx, secIdx, first, second, factor, indices)
-                    const += add
+                    _const += add
 
                     if removeFirst: toRemove.append(firstIdx)
                     if removeSec: toRemove.append(secIdx)
@@ -5621,12 +5622,12 @@ class Node():
         # Adapt the constant. It can even happen that all children have been
         # removed.
         if len(self.children) == 0:
-            self.copy(self.__new_constant_node(const))
+            self.copy(self.__new_constant_node(_const))
             return True
 
         if self.children[0].type == NodeType.CONSTANT:
-            self.children[0].__set_and_reduce_constant(self.children[0].constant + const)
-        else: self.children.insert(0, self.__new_constant_node(const))
+            self.children[0].__set_and_reduce_constant(self.children[0].constant + _const)
+        else: self.children.insert(0, self.__new_constant_node(_const))
         if len(self.children) > 1 and self.children[0].__is_constant(0): del self.children[0]
 
         if len(self.children) == 1: self.copy(self.children[0])
@@ -5872,7 +5873,7 @@ class Node():
         toRemove = []
         done = [False for x in l]
         changed = False
-        const = 0
+        _const = 0
 
         for i in range(len(l) - 1, 0, -1):
             if done[i]: continue
@@ -5903,7 +5904,7 @@ class Node():
                 if not first.children[indices[0]].equals_negated(second.children[indices[1]]): continue
 
                 removeFirst, removeSec, add = self.__merge_inverse_bitwise_terms(firstIdx, secIdx, first, second, factor, indices)
-                const += add
+                _const += add
 
                 if removeFirst: toRemove.append(firstIdx)
                 if removeSec: toRemove.append(secIdx)
