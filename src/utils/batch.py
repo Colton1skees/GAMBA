@@ -1,29 +1,43 @@
 #!/usr/bin/python3
 
-
+from typing import Optional, Union, Tuple
 
 # An index together with a multitude it appears with.
 class IndexWithMultitude():
-    def __init__(self, idx, multitude=1):
+    def __init__(self, idx: int, multitude: int = 1) -> None:
         self.idx = idx
         self.multitude = multitude
 
-    def __str__(self): return "[idx " + str(self.idx) + ", mult " + str(self.multitude) + "]"
+    def __str__(self) -> str: return "[idx " + str(self.idx) + ", mult " + str(self.multitude) + "]"
 
 # A node representing a subset of a sum.
 class Batch():
     # Initialize internals
-    def __init__(self, prevFactorIndices, factorIndices, termIndices, nodesToTerms,
-                 termsToNodes, nodesTriviality, nodesOrder):
+    def __init__(self,
+        prevFactorIndices: list[IndexWithMultitude],
+        factorIndices: list[IndexWithMultitude],
+        termIndices: set[int],
+        nodesToTerms: list[Tuple[int, set[IndexWithMultitude]]],
+        termsToNodes: list[list[IndexWithMultitude]],
+        nodesTriviality: list[bool],
+        nodesOrder: list[int],
+    ) -> None:
         self.prevFactorIndices = prevFactorIndices
         self.factorIndices = factorIndices
-        self.atoms = []
-        self.children = []
+        self.atoms: set[int] = set()
+        self.children: list[Batch] = []
 
         self.__partition(nodesToTerms, termIndices, termsToNodes, nodesTriviality, nodesOrder)
 
     # Partition the batch into subbatches and atoms.
-    def __partition(self, nodesToTerms, termIndices, termsToNodes, nodesTriviality, nodesOrder):
+    def __partition(
+        self,
+        nodesToTerms: list[Tuple[int, set[IndexWithMultitude]]],
+        termIndices: set[int],
+        termsToNodes: list[list[IndexWithMultitude]],
+        nodesTriviality: list[bool],
+        nodesOrder: list[int]
+    ):
         todo = set(termIndices)
 
         while True:
@@ -43,10 +57,10 @@ class Batch():
             # The terms which contain the node to be factored out.
             terms = set([p.idx for p in nodesToTerms[idx][1]])
             # The new list mapping nodes to terms contained in the list above.
-            ntt = []
+            ntt: list[list[Tuple[int, set[IndexWithMultitude]]]] = []
 
             # Reduce multitude due to the node being factored out.
-            nodesToTerms[idx][1] = self.__reduce_multitudes(nodesToTerms[idx][1], multitude)
+            nodesToTerms[idx] = (nodesToTerms[idx][0], self.__reduce_multitudes(nodesToTerms[idx][1], multitude))
             if len(nodesToTerms[idx][1]) > 0: ntt.append(nodesToTerms[idx])
             del nodesToTerms[idx]
 
@@ -93,7 +107,13 @@ class Batch():
         self.atoms = todo
 
     # Determine the next largest possible batch, if there is any.
-    def __get_next_batch(self, nodesToTerms, termsToNodes, nodesTriviality, nodesOrder):
+    def __get_next_batch(
+        self,
+        nodesToTerms: list[Tuple[int, set[IndexWithMultitude]]],
+        termsToNodes: list[list[IndexWithMultitude]],
+        nodesTriviality: list[bool],
+        nodesOrder: list[int]
+    ) -> Optional[int]:
         indices = self.__get_largest_termset_indices(nodesToTerms, termsToNodes, nodesTriviality)
         if indices == None: indices = self.__get_largest_termset_indices(nodesToTerms)
         if indices == None: return None
@@ -110,8 +130,12 @@ class Batch():
 
     # For all batches corresponding to the given indices, count their
     # occurrences.
-    def __collect_largest_batches(self, nodesToTerms, indices):
-        collected = []
+    def __collect_largest_batches(
+        self,
+        nodesToTerms: list[Tuple[int, set[IndexWithMultitude]]],
+        indices: list[int]
+    ) -> list[list[int]]:
+        collected: list[list[int]] = []
         i = 0
 
         while True:
@@ -132,12 +156,12 @@ class Batch():
         return collected
 
     # Returns the lowest multitude of any element in the given list.
-    def __get_lowest_multitude(self, indicesWithMultitude):
+    def __get_lowest_multitude(self, indicesWithMultitude: set[IndexWithMultitude]) -> int:
         return min(indicesWithMultitude, key=lambda x:x.multitude).multitude
 
     # In the given list of indices and multitudes, reduce the multitudes by the
     # given value.
-    def __reduce_multitudes(self, indicesWithMultitude, delta):
+    def __reduce_multitudes(self, indicesWithMultitude: list[IndexWithMultitude], delta: int) -> set[IndexWithMultitude]:
         for p in indicesWithMultitude:
             assert(p.multitude >= delta)
             p.multitude -= delta
@@ -146,12 +170,17 @@ class Batch():
 
     # Returns the indices of the largest sets that are each second elements of
     # the given pairs.
-    def __get_largest_termset_indices(self, pairs, termsToNodes=None, nodesTriviality=None):
+    def __get_largest_termset_indices(
+        self,
+        pairs: list[list[Tuple[int, set[IndexWithMultitude]]]],
+        termsToNodes: Optional[list[list[IndexWithMultitude]]] = None,
+        nodesTriviality: Optional[list[bool]] = None,
+    ) -> Optional[list[int]]:
         assert(len(pairs) > 0)
         assert((termsToNodes == None) == (nodesTriviality == None))
 
-        indices = None
-        maxl = None
+        indices: Optional[list[int]] = None
+        maxl: Optional[int] = None
 
         for i in range(len(pairs)):
             l = len(pairs[i][1])
@@ -177,7 +206,12 @@ class Batch():
     # Returns true iff the given list of pairs contains a pair whose
     # second-element list contains the index of a term which has nontrivial
     # factors left.
-    def __check_for_nontrivial(self, nodeToTerms, termsToNodes, nodesTriviality):
+    def __check_for_nontrivial(
+        self,
+        nodeToTerms: list[Tuple[int, set[IndexWithMultitude]]],
+        termsToNodes: list[list[IndexWithMultitude]],
+        nodesTriviality: list[bool],
+    ) -> bool:
         for pair in nodeToTerms[1]:
             # Copy set in order not to change any states.
             t = {IndexWithMultitude(p.idx, p.multitude) for p in termsToNodes[pair.idx]}
@@ -192,9 +226,13 @@ class Batch():
 
     # In the given list of indices and multitudes, reduce the multitudes by the
     # given values.
-    def __reduce_multitudes_corresponding_to_list(self, indicesWithMultitude, reductions):
+    def __reduce_multitudes_corresponding_to_list(
+        self,
+        indicesWithMultitude: set[IndexWithMultitude],
+        reductions: list[IndexWithMultitude],
+    ) -> set[IndexWithMultitude]:
         for r in reductions:
-            res = [p for p in indicesWithMultitude if p.idx == r.idx]
+            res: list[IndexWithMultitude] = [p for p in indicesWithMultitude if p.idx == r.idx]
             assert(len(res) == 1)
             res[0].multitude -= r.multitude
             assert(res[0].multitude >= 0)
@@ -202,10 +240,10 @@ class Batch():
         return {p for p in indicesWithMultitude if p.multitude > 0}
 
     # Returns the indices of the largest lists.
-    def __get_largest_list_indices(self, lists):
+    def __get_largest_list_indices(self, lists: list[list[int]]) -> list[int]:
         assert(len(lists) > 0)
 
-        indices = [0]
+        indices: list[int] = [0]
         maxl = len(lists[0])
 
         for i in range(1, len(lists)):
@@ -219,11 +257,11 @@ class Batch():
 
 
     # Returns true iff this batch has no subbatches.
-    def is_trivial(self):
+    def is_trivial(self) -> bool:
         return len(self.children) == 0
 
     # Print information about the batch.
-    def print(self, indent=0):
+    def print(self, indent: int = 0) -> None:
         print(indent*" " + "BATCH")
         indent += 2
         print(indent*" " + "factors:", end="")
