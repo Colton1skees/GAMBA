@@ -78,13 +78,13 @@ def mod_red(n, modulus):
     return n % modulus
 
 # Returns true iff the given lists of children match.
-def do_children_match(l1 : list[Node], l2 : list[Node]):
+def do_children_match(l1 : list[Node], l2 : list[Node]) -> bool:
     if len(l1) != len(l2): return False
     return are_all_children_contained(l1, l2)
 
 # Returns true iff all children contained in l1 are also contained in l2.
-def are_all_children_contained(l1 : list[Node], l2 : list[Node]):
-    oIndices = list(range(len(l2)))
+def are_all_children_contained(l1 : list[Node], l2 : list[Node]) -> bool:
+    oIndices : list[int] = list(range(len(l2)))
     for child in l1:
         found = False
         for i in oIndices:
@@ -2929,7 +2929,10 @@ class Node():
 
         if idx == None:
             nodes.append(self.__get_shallow_copy())
-            nodesToTerms.append([len(nodes) - 1, set([IndexWithMultitude(i, multitude)])])
+            idws : list[IndexWithMultitude] = [IndexWithMultitude(i, multitude)]
+            idwsSet : set[IndexWithMultitude] = set(idws)
+
+            nodesToTerms.append((len(nodes) - 1, idwsSet))
             termsToNodes[i].add(IndexWithMultitude(len(nodes) - 1, multitude))
             return
 
@@ -3008,7 +3011,7 @@ class Node():
 
     # Reduces the given set of node indices, together with their multitudes, by
     # that contained in any of both other given lists.
-    def __reduce_node_set(self, indicesWithMultitudes : set[IndexWithMultitude], l1 : int, l2 : int) -> None:
+    def __reduce_node_set(self, indicesWithMultitudes : set[IndexWithMultitude], l1 : list[int], l2 : list[int]) -> None:
         for p in l1 + l2:
             m = [q for q in indicesWithMultitudes if q.idx == p.idx]
             assert(len(m) == 1)
@@ -5480,7 +5483,7 @@ class Node():
     # constant to be added if they have been merged, or None otherwise.
     # Moreover a list of indices to be removed later on is given, and
     # optionally extended.
-    def __try_merge_bitwise_with_constants_with_2_others(self, sublist : list[(i64, int)], i : int, toRemove : list[int]) -> Optional[i64]:
+    def __try_merge_bitwise_with_constants_with_2_others(self, sublist : list[tuple[i64, int]], i : int, toRemove : list[int]) -> Optional[i64]:
         for j in range(1, i):
             for k in range(0, j):
                 add = self.__try_merge_triple_bitwise_with_constants(sublist, i, j, k, toRemove)
@@ -5492,7 +5495,7 @@ class Node():
     # corresponding to the given list and the given indices. Returns a constant
     # to be added if they have been merged, or None otherwise. Moreover a list
     # of indices to be removed later on is given, and optionally extended.
-    def __try_merge_triple_bitwise_with_constants(self, sublist : list[(i64, int)], i : int, j : int, k : int, toRemove : list[int]) -> Optional[i64]:
+    def __try_merge_triple_bitwise_with_constants(self, sublist : list[tuple[i64, int]], i : int, j : int, k : int, toRemove : list[int]) -> Optional[i64]:
         perms : list[list[int]] = [[i, j, k], [j, i, k], [k, i, j]]
         for perm in perms:
             mainFactor, mainIdx = sublist[perm[0]]
@@ -5829,7 +5832,7 @@ class Node():
     #    (x|y) - (~x&y) -> x
     #    (x^y) - 2*(~x&y) -> x - y
     #    (x^y) + 2*(~x|y) -> -2 - x + y
-    def __merge_inverse_bitwise_terms(self, firstIdx : int, secIdx : int, first : Node, second : Node, factor : i64, indices : list[int]) -> tuple[bool, bool, i64]:
+    def __merge_inverse_bitwise_terms(self, firstIdx : int, secIdx : int, first : Node, second : Node, factor : i64, indices : tuple[int, int]) -> tuple[bool, bool, i64]:
         type1 = first.type
         type2 = second.type
         invOpFac, sameOpFac, add = self.__get_operand_factors_and_constant_for_merging_inverse_bitwise(factor, type1, type2)

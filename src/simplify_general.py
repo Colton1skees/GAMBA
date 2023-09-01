@@ -763,7 +763,7 @@ if __name__ == "__main__":
     bitCount = 64
     useZ3 = False
     checkLinear = False
-    modRed = False
+    modRed = True
     verifBitCount = None
     expressions = []
     useRestApi = False
