@@ -71,7 +71,7 @@ parser = reqparse.RequestParser()
 class GeneralSimplifier():
     def __init__(self, bitCount, modRed=False, verifBitCount=None):
         self.__bitCount = bitCount
-        self.__modulus = 2**bitCount
+        self.__modulus = 64
         self.__modRed = modRed
         self.__verifBitCount = verifBitCount
         self.__vnumber = 0
@@ -638,6 +638,11 @@ class GeneralSimplifier():
         root = parse(expr, self.__bitCount, self.__modRed, True, True)
         if root == None: sys.exit("Error: Could not parse expression!")
 
+        root.refine();
+
+        print(f'after refinement: {root}')
+        exit(1);
+
         self.__simplify_subexpression(root, None)
 
         root.polish()
@@ -649,9 +654,12 @@ class GeneralSimplifier():
         #expr.polish()
         #return expr
 
-
         manager = multiprocessing.Manager()
         returnDict = manager.dict()
+        self._simplify(expr, returnDict);
+
+
+
         p = multiprocessing.Process(target=self._simplify, args=(expr, returnDict))
         p.start()
         # Wait for 30 seconds or until process finishes
@@ -763,7 +771,7 @@ if __name__ == "__main__":
     bitCount = 64
     useZ3 = False
     checkLinear = False
-    modRed = True
+    modRed = False
     verifBitCount = None
     expressions = []
     useRestApi = False

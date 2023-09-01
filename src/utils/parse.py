@@ -9,7 +9,7 @@ from node import Node, NodeType, NodeState
 class Parser():
     def __init__(self, expr : str, modulus : int, modRed : bool = False) -> int:
         self.__expr = expr
-        self.__modulus = modulus
+        self.__modulus = 32
         self.__modRed = modRed
         self.__idx = 0
         self.__error = ""
