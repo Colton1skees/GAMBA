@@ -5096,8 +5096,8 @@ class Node():
     # Additionally returns the bitwise operation or None, resp. If expType is
     # None, considers all binary bitwise operations.
     def __get_factor_of_bitw_with_constant(self, expType : Optional[NodeType] =None) -> tuple[Optional[i64], Node]:
-        factor = None
-        node = None
+        factor : Optional[i64] = None
+        node : Node = None
 
         if self.__is_bitwise_binop():
             if expType != None and self.type != expType: return None, None
@@ -5264,11 +5264,11 @@ class Node():
 
     # Returns a list of all terms in this sum node which are constant multiples
     # of bitwise operations with a constant operand.
-    def __collect_all_indices_of_bitw_with_constants(self) -> list[list[i64]]:
+    def __collect_all_indices_of_bitw_with_constants(self) -> list[list[tuple[i64, int]]]:
         assert(self.type == NodeType.SUM)
 
         # A list containing tuples of factors and lists of indices.
-        l : list[list[i64]] = []
+        l : list[list[tuple[i64, int]]] = []
 
         for i in range(len(self.children)):
             factor, node = self.children[i].__get_factor_of_bitw_with_constant()
@@ -5298,12 +5298,12 @@ class Node():
 
                 elif not do_children_match(first.children[1:], node.children[1:]): continue
 
-                sublist.append([factor, i])
+                sublist.append((factor, i))
                 found = True
                 break
 
             if not found:
-                l.append([[factor, i]])
+                l.append([(factor, i)])
 
         return l
 
@@ -5480,7 +5480,7 @@ class Node():
     # constant to be added if they have been merged, or None otherwise.
     # Moreover a list of indices to be removed later on is given, and
     # optionally extended.
-    def __try_merge_bitwise_with_constants_with_2_others(self, sublist : list[list[int]], i : int, toRemove : list[int]) -> Optional[i64]:
+    def __try_merge_bitwise_with_constants_with_2_others(self, sublist : list[(i64, int)], i : int, toRemove : list[int]) -> Optional[i64]:
         for j in range(1, i):
             for k in range(0, j):
                 add = self.__try_merge_triple_bitwise_with_constants(sublist, i, j, k, toRemove)
@@ -5492,7 +5492,7 @@ class Node():
     # corresponding to the given list and the given indices. Returns a constant
     # to be added if they have been merged, or None otherwise. Moreover a list
     # of indices to be removed later on is given, and optionally extended.
-    def __try_merge_triple_bitwise_with_constants(self, sublist : list[list[int]], i : int, j : int, k : int, toRemove : list[int]) -> Optional[i64]:
+    def __try_merge_triple_bitwise_with_constants(self, sublist : list[(i64, int)], i : int, j : int, k : int, toRemove : list[int]) -> Optional[i64]:
         perms : list[list[int]] = [[i, j, k], [j, i, k], [k, i, j]]
         for perm in perms:
             mainFactor, mainIdx = sublist[perm[0]]
@@ -5689,11 +5689,11 @@ class Node():
     # of bitwise operations of given type with no constant operator. The nodes
     # are partitioned wrt. their factors and their numbers of operands in the
     # bitwise expressions.
-    def __collect_indices_of_bitw_without_constants_in_sum(self, expType : NodeType) -> tuple[i64, int, list[int]]:
+    def __collect_indices_of_bitw_without_constants_in_sum(self, expType : NodeType) -> list[tuple[i64, int, list[int]]]:
         assert(self.type == NodeType.SUM)
 
         # A list containing tuples of factors and lists of indices.
-        l : tuple[i64, int, list[int]] = []
+        l : list[tuple[i64, int, list[int]]] = []
         for i in range(len(self.children)):
             factor, node = self.children[i].__get_factor_of_bitw_without_constant(expType)
             assert((factor == None) == (node == None))
@@ -5710,7 +5710,7 @@ class Node():
                 break
 
             if not found:
-                l.append([factor, opCnt, [i]])
+                l.append((factor, opCnt, [i]))
 
         return l
 
@@ -5829,7 +5829,7 @@ class Node():
     #    (x|y) - (~x&y) -> x
     #    (x^y) - 2*(~x&y) -> x - y
     #    (x^y) + 2*(~x|y) -> -2 - x + y
-    def __merge_inverse_bitwise_terms(self, firstIdx : int, secIdx : int, first : Node, second : Node, factor : i64, indices : list[int]) -> tuple[bool, bool, tuple[i64, i64, i64]]:
+    def __merge_inverse_bitwise_terms(self, firstIdx : int, secIdx : int, first : Node, second : Node, factor : i64, indices : list[int]) -> tuple[bool, bool, i64]:
         type1 = first.type
         type2 = second.type
         invOpFac, sameOpFac, add = self.__get_operand_factors_and_constant_for_merging_inverse_bitwise(factor, type1, type2)
