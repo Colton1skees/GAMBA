@@ -17,7 +17,7 @@ class Batch():
         prevFactorIndices: list[IndexWithMultitude],
         factorIndices: list[IndexWithMultitude],
         termIndices: set[int],
-        nodesToTerms: list[Tuple[int, set[IndexWithMultitude]]],
+        nodesToTerms: list[tuple[int, set[IndexWithMultitude]]],
         termsToNodes: list[list[IndexWithMultitude]],
         nodesTriviality: list[bool],
         nodesOrder: list[int],
@@ -32,9 +32,9 @@ class Batch():
     # Partition the batch into subbatches and atoms.
     def __partition(
         self,
-        nodesToTerms: list[Tuple[int, set[IndexWithMultitude]]],
+        nodesToTerms: list[tuple[int, set[IndexWithMultitude]]],
         termIndices: set[int],
-        termsToNodes: list[list[IndexWithMultitude]],
+        termsToNodes: list[set[IndexWithMultitude]],
         nodesTriviality: list[bool],
         nodesOrder: list[int]
     ):
@@ -57,7 +57,7 @@ class Batch():
             # The terms which contain the node to be factored out.
             terms = set([p.idx for p in nodesToTerms[idx][1]])
             # The new list mapping nodes to terms contained in the list above.
-            ntt: list[list[Tuple[int, set[IndexWithMultitude]]]] = []
+            ntt: list[list[tuple[int, set[IndexWithMultitude]]]] = []
 
             # Reduce multitude due to the node being factored out.
             nodesToTerms[idx] = (nodesToTerms[idx][0], self.__reduce_multitudes(nodesToTerms[idx][1], multitude))
@@ -109,8 +109,8 @@ class Batch():
     # Determine the next largest possible batch, if there is any.
     def __get_next_batch(
         self,
-        nodesToTerms: list[Tuple[int, set[IndexWithMultitude]]],
-        termsToNodes: list[list[IndexWithMultitude]],
+        nodesToTerms: list[tuple[int, set[IndexWithMultitude]]],
+        termsToNodes: list[set[IndexWithMultitude]],
         nodesTriviality: list[bool],
         nodesOrder: list[int]
     ) -> Optional[int]:
@@ -132,7 +132,7 @@ class Batch():
     # occurrences.
     def __collect_largest_batches(
         self,
-        nodesToTerms: list[Tuple[int, set[IndexWithMultitude]]],
+        nodesToTerms: list[tuple[int, set[IndexWithMultitude]]],
         indices: list[int]
     ) -> list[list[int]]:
         collected: list[list[int]] = []
@@ -172,8 +172,8 @@ class Batch():
     # the given pairs.
     def __get_largest_termset_indices(
         self,
-        pairs: list[list[Tuple[int, set[IndexWithMultitude]]]],
-        termsToNodes: Optional[list[list[IndexWithMultitude]]] = None,
+        pairs: list[list[tuple[int, set[IndexWithMultitude]]]],
+        termsToNodes: Optional[list[set[IndexWithMultitude]]] = None,
         nodesTriviality: Optional[list[bool]] = None,
     ) -> Optional[list[int]]:
         assert(len(pairs) > 0)
@@ -208,8 +208,8 @@ class Batch():
     # factors left.
     def __check_for_nontrivial(
         self,
-        nodeToTerms: list[Tuple[int, set[IndexWithMultitude]]],
-        termsToNodes: list[list[IndexWithMultitude]],
+        nodeToTerms: list[tuple[int, set[IndexWithMultitude]]],
+        termsToNodes: list[set[IndexWithMultitude]],
         nodesTriviality: list[bool],
     ) -> bool:
         for pair in nodeToTerms[1]:

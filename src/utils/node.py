@@ -2872,9 +2872,9 @@ class Node():
         return True
 
     # Store the factors of this node in the given lists.
-    def __collect_all_factors_of_sum(self) -> tuple[list[Node], list[Any], list[set[IndexWithMultitude]]]:
+    def __collect_all_factors_of_sum(self) -> tuple[list[Node], list[tuple[int, set[IndexWithMultitude]]], list[set[IndexWithMultitude]]]:
         nodes : list[Node] = []
-        nodesToTerms : list[list[IndexOrSet]] = []
+        nodesToTerms : list[tuple[int, set[IndexWithMultitude]]] = []
         termsToNodes : list[set[IndexWithMultitude]] = []
 
         for i in range(len(self.children)):
@@ -2886,7 +2886,7 @@ class Node():
         return nodes, nodesToTerms, termsToNodes
 
     # Store the factors of this node in the given lists.
-    def __collect_factors(self, i : int, multitude : i64, nodes : list[Node], nodesToTerms : list[list[IndexOrSet]], termsToNodes : list[set[IndexWithMultitude]]) -> None:
+    def __collect_factors(self, i : int, multitude : i64, nodes : list[Node], nodesToTerms : list[tuple[int, set[IndexWithMultitude]]], termsToNodes : list[set[IndexWithMultitude]]) -> None:
         if self.type == NodeType.PRODUCT:
             for factor in self.children:
                 factor.__collect_factors(i, multitude, nodes, nodesToTerms, termsToNodes)
@@ -2898,7 +2898,7 @@ class Node():
             self.__check_store_factor(i, multitude, nodes, nodesToTerms, termsToNodes)
 
     # Store the factors of this power node in the given lists.
-    def __collect_factors_of_power(self, i : int, multitude : i64, nodes : list[Node], nodesToTerms : list[list[IndexOrSet]], termsToNodes : list[set[IndexWithMultitude]]) -> None:
+    def __collect_factors_of_power(self, i : int, multitude : i64, nodes : list[Node], nodesToTerms : list[tuple[int, set[IndexWithMultitude]]], termsToNodes : list[set[IndexWithMultitude]]) -> None:
         assert(self.type == NodeType.POWER)
 
         _base = self.children[0]
@@ -2924,7 +2924,7 @@ class Node():
         self.__check_store_factor(i, multitude, nodes, nodesToTerms, termsToNodes)
 
     # Store the factors of this node in the given lists.
-    def __check_store_factor(self, i : int, multitude : i64, nodes : list[Node], nodesToTerms : z, termsToNodes : list[set[IndexWithMultitude]]) -> None:
+    def __check_store_factor(self, i : int, multitude : i64, nodes : list[Node], nodesToTerms : list[tuple[int, set[IndexWithMultitude]]], termsToNodes : list[set[IndexWithMultitude]]) -> None:
         idx = self.__get_index_in_list(nodes)
 
         if idx == None:
@@ -5689,11 +5689,11 @@ class Node():
     # of bitwise operations of given type with no constant operator. The nodes
     # are partitioned wrt. their factors and their numbers of operands in the
     # bitwise expressions.
-    def __collect_indices_of_bitw_without_constants_in_sum(self, expType : NodeType) -> list[Any]:
+    def __collect_indices_of_bitw_without_constants_in_sum(self, expType : NodeType) -> tuple[i64, int, list[int]]:
         assert(self.type == NodeType.SUM)
 
         # A list containing tuples of factors and lists of indices.
-        l : list[Any] = []
+        l : tuple[i64, int, list[int]] = []
         for i in range(len(self.children)):
             factor, node = self.children[i].__get_factor_of_bitw_without_constant(expType)
             assert((factor == None) == (node == None))
@@ -5992,7 +5992,7 @@ class Node():
 
     # Returns a list of all terms in this sum node which are constant multiples
     # of bitwise operations with no constant operator.
-    def __collect_all_indices_of_bitw_without_constants(self) -> list[Any]:
+    def __collect_all_indices_of_bitw_without_constants(self) -> list[tuple[i64, int]]:
         assert(self.type == NodeType.SUM)
 
         # A list containing tuples of factors and indices.
