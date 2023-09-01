@@ -2878,7 +2878,8 @@ class Node():
         termsToNodes : list[set[IndexWithMultitude]] = []
 
         for i in range(len(self.children)):
-            termsToNodes.append(set([]))
+            idwSet : set[IndexWithMultitude] = set([])
+            termsToNodes.append(idwSet)
             term = self.children[i]
             term.__collect_factors(i, 1, nodes, nodesToTerms, termsToNodes)
 

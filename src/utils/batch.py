@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 
+# Explicit i32 typedef for transpile. Otherwise all integers are assumed to be i64
+i64 = int
+
 from typing import Optional, Union, Tuple
 
 # An index together with a multitude it appears with.
@@ -37,7 +40,7 @@ class Batch():
         termsToNodes: list[set[IndexWithMultitude]],
         nodesTriviality: list[bool],
         nodesOrder: list[int]
-    ):
+    ) -> None:
         todo = set(termIndices)
 
         while True:
@@ -53,11 +56,11 @@ class Batch():
             factor = nodesToTerms[idx][0]
             multitude = self.__get_lowest_multitude(nodesToTerms[idx][1])
 
-            factors = [IndexWithMultitude(factor, multitude)]
+            factors : list[IndexWithMultitude] = [IndexWithMultitude(factor, multitude)]
             # The terms which contain the node to be factored out.
-            terms = set([p.idx for p in nodesToTerms[idx][1]])
+            terms : set[int] = set([p.idx for p in nodesToTerms[idx][1]])
             # The new list mapping nodes to terms contained in the list above.
-            ntt: list[list[tuple[int, set[IndexWithMultitude]]]] = []
+            ntt: list[tuple[int, set[IndexWithMultitude]]] = []
 
             # Reduce multitude due to the node being factored out.
             nodesToTerms[idx] = (nodesToTerms[idx][0], self.__reduce_multitudes(nodesToTerms[idx][1], multitude))
@@ -82,7 +85,7 @@ class Batch():
                         factors.append(IndexWithMultitude(b[0], multitude))
 
                         spl = self.__reduce_multitudes(spl, multitude)
-                        if len(spl) > 0: ntt.append([b[0], spl])
+                        if len(spl) > 0: ntt.append((b[0], spl))
 
                         # It may be that b is larger than the currently chosen
                         # batch, since we neglect factoring out nodes that
@@ -90,7 +93,7 @@ class Batch():
 
                     else:
                         # Split b.
-                        ntt.append([b[0], {p for p in b[1] if p.idx in inters}])
+                        ntt.append((b[0], {p for p in b[1] if p.idx in inters}))
 
                     b[1] = {p for p in b[1] if p.idx not in inters}
                     if len(b[1]) <= 1: del nodesToTerms[i]
@@ -156,12 +159,12 @@ class Batch():
         return collected
 
     # Returns the lowest multitude of any element in the given list.
-    def __get_lowest_multitude(self, indicesWithMultitude: set[IndexWithMultitude]) -> int:
+    def __get_lowest_multitude(self, indicesWithMultitude: set[IndexWithMultitude]) -> i64:
         return min(indicesWithMultitude, key=lambda x:x.multitude).multitude
 
     # In the given list of indices and multitudes, reduce the multitudes by the
     # given value.
-    def __reduce_multitudes(self, indicesWithMultitude: list[IndexWithMultitude], delta: int) -> set[IndexWithMultitude]:
+    def __reduce_multitudes(self, indicesWithMultitude: set[IndexWithMultitude], delta: i64) -> set[IndexWithMultitude]:
         for p in indicesWithMultitude:
             assert(p.multitude >= delta)
             p.multitude -= delta
@@ -172,14 +175,14 @@ class Batch():
     # the given pairs.
     def __get_largest_termset_indices(
         self,
-        pairs: list[list[tuple[int, set[IndexWithMultitude]]]],
-        termsToNodes: Optional[list[set[IndexWithMultitude]]] = None,
-        nodesTriviality: Optional[list[bool]] = None,
-    ) -> Optional[list[int]]:
+        pairs: list[tuple[int, set[IndexWithMultitude]]],
+        termsToNodes: list[set[IndexWithMultitude]] = None,
+        nodesTriviality: list[bool] = None,
+    ) -> list[int]:
         assert(len(pairs) > 0)
         assert((termsToNodes == None) == (nodesTriviality == None))
 
-        indices: Optional[list[int]] = None
+        indices: list[int] = None
         maxl: Optional[int] = None
 
         for i in range(len(pairs)):
@@ -208,7 +211,7 @@ class Batch():
     # factors left.
     def __check_for_nontrivial(
         self,
-        nodeToTerms: list[tuple[int, set[IndexWithMultitude]]],
+        nodeToTerms: tuple[int, set[IndexWithMultitude]],
         termsToNodes: list[set[IndexWithMultitude]],
         nodesTriviality: list[bool],
     ) -> bool:
