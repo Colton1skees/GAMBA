@@ -78,12 +78,12 @@ def mod_red(n, modulus):
     return n % modulus
 
 # Returns true iff the given lists of children match.
-def do_children_match(l1, l2):
+def do_children_match(l1 : list[Node], l2 : list[Node]):
     if len(l1) != len(l2): return False
     return are_all_children_contained(l1, l2)
 
 # Returns true iff all children contained in l1 are also contained in l2.
-def are_all_children_contained(l1, l2):
+def are_all_children_contained(l1 : list[Node], l2 : list[Node]):
     oIndices = list(range(len(l2)))
     for child in l1:
         found = False
@@ -1612,7 +1612,7 @@ class Node():
 
     # Knowing that the largest e bits have no influence for this node, figure
     # out whether to either set or unset all these irrelevant bits.
-    def __check_beautify_constants(self, ee : int) -> bool:
+    def __check_beautify_constants(self, ee : i64) -> bool:
         # Here the usage of int() is a hint to the C# transpiler to downcast
         # ee to a 32 bit integer. This is because 
         e = int(ee)
@@ -5059,11 +5059,11 @@ class Node():
 
     # Returns a list of all terms in this sum node which are constant multiples
     # of bitwise operations of given type with a constant operator.
-    def __collect_indices_of_bitw_with_constants_in_sum(self, expType : NodeType) -> list[tuple[int, list[int]]]:
+    def __collect_indices_of_bitw_with_constants_in_sum(self, expType : NodeType) -> list[tuple[i64, list[int]]]:
         assert(self.type == NodeType.SUM)
 
         # A list containing tuples of factors and lists of indices.
-        l : list[list[i64]] =[]
+        l : list[tuple[i64, list[int]]] =[]
         for i in range(len(self.children)):
             factor, node = self.children[i].__get_factor_of_bitw_with_constant(expType)
             assert((factor == None) == (node == None))
@@ -5087,7 +5087,7 @@ class Node():
                 break
 
             if not found:
-                l.append([factor, [i]])
+                l.append((factor, [i]))
 
         return l
 
@@ -5146,7 +5146,7 @@ class Node():
         l = self.__collect_indices_of_bitw_with_constants_in_sum(expType)
         if len(l) == 0: return False
 
-        toRemove : list[Node] = []
+        toRemove : list[int] = []
         changed = False
 
         for pair in l:
@@ -5996,13 +5996,13 @@ class Node():
         assert(self.type == NodeType.SUM)
 
         # A list containing tuples of factors and indices.
-        l = []
+        l : list[tuple[i64, int]] = []
         for i in range(len(self.children)):
             factor, node = self.children[i].__get_factor_of_bitw_without_constant()
             assert((factor == None) == (node == None))
             if factor == None: continue
 
-            l.append([factor, i])
+            l.append((factor, i))
 
         return l
 
@@ -6328,6 +6328,8 @@ class Node():
             inv = node.get_copy()
             inv.__multiply_by_minus_one()
 
+        ch : bool = False
+        done : bool = False
         for child in self.children:
             ch, done = child.__try_substitute_node(node, vname, bitwise)
             if ch: changed = True
