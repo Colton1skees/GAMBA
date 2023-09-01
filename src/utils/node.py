@@ -106,7 +106,7 @@ class Node():
         self.__vidx = -1
         self.constant = 0
         self.state = NodeState.UNKNOWN
-        self.__modulus = 32
+        self.__modulus = modulus
         self.__modRed = modRed
         self.linearEnd = 0
         self.__MAX_IT = 10
@@ -215,8 +215,6 @@ class Node():
     # is False and the number is larger than half modulus, in order to have a
     # minimal absolute value in this case.
     def __get_reduced_constant(self, c : i64) -> i64:
-        #print(f'{self.__modulus}')
-        #print(f'{self.__modRed}')
         if self.__modRed: return mod_red(c, self.__modulus)
         return self.__get_reduced_constant_closer_to_zero(c)
 
@@ -6145,7 +6143,6 @@ class Node():
     # completely bitwise, linear or nonlinear expressions. If restrictedScope
     # is True, the child nodes are assumed to be already marked.
     def mark_linear(self, restrictedScope : bool = False) -> None:
-        exit(1)
         for c in self.children:
             if not restrictedScope or c.state == NodeState.UNKNOWN: c.mark_linear()
 
@@ -6240,7 +6237,6 @@ class Node():
     # for power nodes. Do nothing for the latter since the power is not
     # commutative.
     def __reorder_and_determine_linear_end(self) -> None:
-        exit(1)
         self.linearEnd = 0
 
         # We do not perform reordering for power operator.
@@ -6528,7 +6524,6 @@ class Node():
 
         # Start (and end) with ordering for standardization in the steps in
         # between.
-        exit(1)
         self.__reorder_variables()
         self.__resolve_bitwise_negations_in_sums()
         self.__insert_bitwise_negations(parent)
@@ -6672,7 +6667,6 @@ class Node():
 
     # Sort operands of binary operations.
     def sort(self) -> None:
-        exit(1)
         for c in self.children: c.sort()
         self.__reorder_variables()
 
@@ -6680,7 +6674,6 @@ class Node():
     # are at the front of the children list, potentially after a constant, and
     # sort them alphabetically.
     def __reorder_variables(self) -> None:
-        exit(1)
         if self.type < NodeType.PRODUCT: return
         if len(self.children) <= 1: return
 
