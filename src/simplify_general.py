@@ -639,32 +639,41 @@ class GeneralSimplifier():
         self.__simplify_subexpression(root, None)
 
         root.polish()
-        returnDict[0] = root
+        return root
 
     # Simplify the given MBA and check the result if required.
     def simplify(self, expr, useZ3=False):
-        manager = multiprocessing.Manager()
-        returnDict = manager.dict()
-        p = multiprocessing.Process(target=self._simplify, args=(expr, returnDict))
-        p.start()
-        # Wait for 30 seconds or until process finishes
-        p.join(30)
+        # manager = multiprocessing.Manager()
+        # returnDict = manager.dict()
+        # p = multiprocessing.Process(target=self._simplify, args=(expr, returnDict))
+        # p.start()
+        # # Wait for 30 seconds or until process finishes
+        # p.join(30)
+        #
+        # # If thread is still active
+        # if p.is_alive():
+        #     print("timed out... kill process...")
+        #
+        #     # Terminate - may not work if process is stuck for good
+        #     #p.terminate()
+        #     # OR Kill - will work for sure, no chance for process to finish nicely however
+        #     p.kill()
+        #
+        #     p.join()
+        #     return ""
+        #
+        # if len(returnDict.values()) == 0: sys.exit("No simplification result!")
+        #
+        # root = returnDict.values()[0]
+        # simpl = root.to_string()
+        #
+        # if useZ3 and not self.__verify_using_z3(expr, simpl):
+        #     sys.exit("Error in simplification! Simplified expression is not proved equivalent to original one!")
+        #
+        # return simpl if self.__check_verify(expr, root) else ""
 
-        # If thread is still active
-        if p.is_alive():
-            print("timed out... kill process...")
-
-            # Terminate - may not work if process is stuck for good
-            #p.terminate()
-            # OR Kill - will work for sure, no chance for process to finish nicely however
-            p.kill()
-
-            p.join()
-            return ""
-
-        if len(returnDict.values()) == 0: sys.exit("No simplification result!")
-
-        root = returnDict.values()[0]
+        returnDict = []
+        root = self._simplify(expr, returnDict)
         simpl = root.to_string()
 
         if useZ3 and not self.__verify_using_z3(expr, simpl):
@@ -691,6 +700,9 @@ def print_usage():
     print("    -m:    enable a reduction of all constants modulo 2**b where b is the bit count")
     print("    -v:    specify a bit count for verification for nonlinear input (default: no verification)")
 
+output = simplify_mba("3420807585723318272+y*(-5283798922228137983+y*(5594540424569028608+5151688751860154368*y))+8625632023702142976*(-45474089-17126441*y)**3", 64, False, False, None)
+print(f'output: {output}')
+exit(1)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog='GAMBA', description='Simplification of General Mixed Boolean-Arithmetic Expressions', epilog='Each command line input not preceded by option indicators is considered an expression to be simplified. Expressions are read from standard input if none are given on command line.')
